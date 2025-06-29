@@ -1,0 +1,13 @@
+package ohim:dom;
+
+interface event {
+    resource event {
+        constructor(ty: string);
+        ty: func() -> string;
+    }
+}
+
+world window {
+    import event;
+}
+

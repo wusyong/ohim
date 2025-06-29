@@ -1,0 +1,16 @@
+[package]
+name = "ohim"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+wit-bindgen-rt = { version = "0.43.0", features = ["bitflags"] }
+wasmtime = "34"
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "component:ohim"
+
+[package.metadata.component.dependencies]
