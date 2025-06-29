@@ -1,4 +1,3 @@
-pub use dom_object::DOMObject;
 use ohim::dom::event;
 use wasmtime::{
     AsContextMut, Result, RootScope,
@@ -14,7 +13,9 @@ bindgen!({
     }
 });
 
-struct EventImpl {
+pub type DOMObject = dom_object::DOMObject<EventImpl>;
+
+pub struct EventImpl {
     type_: String,
 }
 
@@ -36,10 +37,6 @@ impl<C: AsContextMut> event::HostEvent for Event<C> {
 
     fn get_type(&mut self, self_: Resource<DOMObject>) -> String {
         let event = self.table.get(&self_).unwrap();
-        event
-            .data::<EventImpl, _>(&self.scope)
-            .unwrap()
-            .type_
-            .to_string()
+        event.data(&self.scope).unwrap().type_.to_string()
     }
 }

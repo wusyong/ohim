@@ -1,15 +1,15 @@
-use std::any::Any;
+use std::{any::Any, marker::PhantomData};
 
 use wasmtime::{AsContextMut, Error, ExternRef, GcHeapOutOfMemory, Result, Rooted, StoreContext};
 
-pub struct DOMObject(pub Rooted<ExternRef>);
+pub struct DOMObject<T: 'static + Any + Send + Sync> {
+    object: Rooted<ExternRef>,
+    _phantom: PhantomData<T>,
+}
 
-impl DOMObject {
-    pub fn new<T>(mut context: impl AsContextMut, value: T) -> Result<Self>
-    where
-        T: 'static + Any + Send + Sync,
-    {
-        Ok(DOMObject(match ExternRef::new(&mut context, value) {
+impl<T: 'static + Any + Send + Sync> DOMObject<T> {
+    pub fn new(mut context: impl AsContextMut, value: T) -> Result<Self> {
+        let object = match ExternRef::new(&mut context, value) {
             Ok(x) => x,
             Err(e) => match e.downcast::<GcHeapOutOfMemory<&str>>() {
                 Ok(oom) => {
@@ -19,15 +19,19 @@ impl DOMObject {
                 }
                 Err(e) => return Err(e),
             },
-        }))
+        };
+
+        Ok(Self {
+            object,
+            _phantom: PhantomData,
+        })
     }
 
-    pub fn data<'a, T, U>(&self, store: impl Into<StoreContext<'a, U>>) -> Result<&'a T>
+    pub fn data<'a, U>(&self, store: impl Into<StoreContext<'a, U>>) -> Result<&'a T>
     where
-        T: 'static,
         U: 'static,
     {
-        self.0
+        self.object
             .data(store)?
             .ok_or_else(|| Error::msg("externref has no host data"))?
             .downcast_ref::<T>()
