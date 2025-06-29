@@ -1,47 +1,45 @@
+pub use dom_object::DOMObject;
 use ohim::dom::event;
 use wasmtime::{
-    AsContextMut, ExternRef, Result, RootScope, Rooted,
+    AsContextMut, Result, RootScope,
     component::{Resource, ResourceTable, bindgen},
 };
+
+mod dom_object;
 
 bindgen!({
     path: "./wit/event.wit",
     with: {
-        "ohim:dom/event/event": RootedRef,
+        "ohim:dom/event/event": DOMObject,
     }
 });
 
-pub type RootedRef = Rooted<ExternRef>;
-
-pub struct Event {
-    ty: String,
+struct EventImpl {
+    type_: String,
 }
 
-pub struct EventHost<C: AsContextMut> {
+pub struct Event<C: AsContextMut> {
     table: ResourceTable,
     scope: RootScope<C>,
 }
 
-impl<C: AsContextMut> event::HostEvent for EventHost<C> {
-    fn new(&mut self, ty: String) -> Resource<RootedRef> {
-        let data = ExternRef::new(&mut self.scope, Event { ty }).unwrap();
+impl<C: AsContextMut> event::HostEvent for Event<C> {
+    fn new(&mut self, ty: String) -> Resource<DOMObject> {
+        let data = DOMObject::new(&mut self.scope, EventImpl { type_: ty }).unwrap();
         self.table.push(data).unwrap()
     }
 
-    fn drop(&mut self, rep: Resource<RootedRef>) -> Result<()> {
+    fn drop(&mut self, rep: Resource<DOMObject>) -> Result<()> {
         self.table.delete(rep)?;
         Ok(())
     }
 
-    fn ty(&mut self, self_: Resource<RootedRef>) -> String {
+    fn get_type(&mut self, self_: Resource<DOMObject>) -> String {
         let event = self.table.get(&self_).unwrap();
         event
-            .data(&self.scope)
+            .data::<EventImpl, _>(&self.scope)
             .unwrap()
-            .unwrap()
-            .downcast_ref::<&Event>()
-            .unwrap()
-            .ty
+            .type_
             .to_string()
     }
 }

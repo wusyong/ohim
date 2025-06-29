@@ -3,11 +3,11 @@ package ohim:dom;
 interface event {
     resource event {
         constructor(ty: string);
-        ty: func() -> string;
+        get-type: func() -> string;
     }
 }
 
-world window {
+world all {
     import event;
 }
 

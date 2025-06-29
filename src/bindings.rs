@@ -72,7 +72,7 @@ pub mod ohim {
             }
             impl Event {
                 #[allow(unused_unsafe, clippy::all)]
-                pub fn ty(&self) -> _rt::String {
+                pub fn get_type(&self) -> _rt::String {
                     unsafe {
                         #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
                         #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
@@ -89,7 +89,7 @@ pub mod ohim {
                         #[cfg(target_arch = "wasm32")]
                         #[link(wasm_import_module = "ohim:dom/event")]
                         unsafe extern "C" {
-                            #[link_name = "[method]event.ty"]
+                            #[link_name = "[method]event.get-type"]
                             fn wit_import1(_: i32, _: *mut u8);
                         }
                         #[cfg(not(target_arch = "wasm32"))]
@@ -200,18 +200,16 @@ mod _rt {
     extern crate alloc as alloc_crate;
 }
 #[cfg(target_arch = "wasm32")]
-#[unsafe(
-    link_section = "component-type:wit-bindgen:0.41.0:ohim:dom:window:encoded world"
-)]
+#[unsafe(link_section = "component-type:wit-bindgen:0.41.0:ohim:dom:all:encoded world")]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
 pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 253] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x80\x01\x01A\x02\x01\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x83\x01\x01A\x02\x01\
 A\x02\x01B\x07\x04\0\x05event\x03\x01\x01i\0\x01@\x01\x02tys\0\x01\x04\0\x12[con\
-structor]event\x01\x02\x01h\0\x01@\x01\x04self\x03\0s\x04\0\x10[method]event.ty\x01\
-\x04\x03\0\x0eohim:dom/event\x05\0\x04\0\x0fohim:dom/window\x04\0\x0b\x0c\x01\0\x06\
-window\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227\
-.1\x10wit-bindgen-rust\x060.41.0";
+structor]event\x01\x02\x01h\0\x01@\x01\x04self\x03\0s\x04\0\x16[method]event.get\
+-type\x01\x04\x03\0\x0eohim:dom/event\x05\0\x04\0\x0cohim:dom/all\x04\0\x0b\x09\x01\
+\0\x03all\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.\
+227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
