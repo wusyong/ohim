@@ -4,13 +4,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-wit-bindgen-rt = { version = "0.43.0", features = ["bitflags"] }
-wasmtime = "34"
+anyhow = { workspace = true }
+wasmtime = { workspace = true }
+wasmtime-wasi = { workspace = true }
+wit-component = { workspace = true }
 
-[lib]
-crate-type = ["cdylib"]
+[workspace]
+resolver = '2'
+members = [
+  "wasm",
+]
 
-[package.metadata.component]
-package = "component:ohim"
-
-[package.metadata.component.dependencies]
+[workspace.dependencies]
+anyhow = { version = "1.0.93", default-features = false }
+wasmtime = "34.0"
+wasmtime-wasi = "34.0"
+wit-component = "0.235.0"
+wit-bindgen = { version = "0.43.0", default-features = false }

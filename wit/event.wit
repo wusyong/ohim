@@ -9,5 +9,6 @@ interface event {
 
 world all {
     import event;
+    export test: func() -> string;
 }
 

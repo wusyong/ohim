@@ -1,8 +1,9 @@
-use ohim::dom::event;
+use ohim::dom::event::{Host, HostEvent};
 use wasmtime::{
-    AsContextMut, Result, RootScope,
+    Result, Store,
     component::{Resource, ResourceTable, bindgen},
 };
+use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 mod dom_object;
 
@@ -13,20 +14,21 @@ bindgen!({
     }
 });
 
-pub type DOMObject = dom_object::DOMObject<EventImpl>;
+pub type DOMObject = dom_object::DOMObject<Event>;
 
-pub struct EventImpl {
+pub struct Event {
     type_: String,
 }
 
-pub struct Event<C: AsContextMut> {
-    table: ResourceTable,
-    scope: RootScope<C>,
+pub struct DOM {
+    pub table: ResourceTable,
+    pub ctx: WasiCtx,
+    pub store: Store<()>,
 }
 
-impl<C: AsContextMut> event::HostEvent for Event<C> {
+impl HostEvent for DOM {
     fn new(&mut self, ty: String) -> Resource<DOMObject> {
-        let data = DOMObject::new(&mut self.scope, EventImpl { type_: ty }).unwrap();
+        let data = DOMObject::new(&mut self.store, Event { type_: ty }).unwrap();
         self.table.push(data).unwrap()
     }
 
@@ -37,6 +39,20 @@ impl<C: AsContextMut> event::HostEvent for Event<C> {
 
     fn get_type(&mut self, self_: Resource<DOMObject>) -> String {
         let event = self.table.get(&self_).unwrap();
-        event.data(&self.scope).unwrap().type_.to_string()
+        event.data(&self.store).unwrap().type_.to_string()
+    }
+}
+
+impl Host for DOM {}
+
+impl IoView for DOM {
+    fn table(&mut self) -> &mut ResourceTable {
+        &mut self.table
+    }
+}
+
+impl WasiView for DOM {
+    fn ctx(&mut self) -> &mut WasiCtx {
+        &mut self.ctx
     }
 }

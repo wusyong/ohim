@@ -1,0 +1,24 @@
+[package]
+name = "test"
+version = "0.0.1"
+publish = false
+edition = "2024"
+
+[dependencies]
+wit-bindgen = { workspace = true, default-features = true }
+
+[lib]
+path = "test.rs"
+name = "test"
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "ohim:dom"
+
+[package.metadata.component.target.dependencies]
+
+[package.metadata.component.target]
+path = "../wit"
+world = "all"
+
+[package.metadata.component.dependencies]
