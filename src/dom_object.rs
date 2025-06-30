@@ -2,6 +2,7 @@ use std::{any::Any, marker::PhantomData};
 
 use wasmtime::{AsContextMut, Error, ExternRef, GcHeapOutOfMemory, Result, Rooted, StoreContext};
 
+/// A DOM Object is a GC traced data object.
 pub struct DOMObject<T: 'static + Any + Send + Sync> {
     object: Rooted<ExternRef>,
     _phantom: PhantomData<T>,

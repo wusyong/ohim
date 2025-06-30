@@ -1,7 +1,6 @@
 use ohim::dom::event::Event;
 
-// Use wit_bindgen to generate the bindings from the component model to Rust.
-// For more information see: https://github.com/bytecodealliance/wit-bindgen/
+// cargo component build
 wit_bindgen::generate!({
     path: "../wit/",
     world: "all",

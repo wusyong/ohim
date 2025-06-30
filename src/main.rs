@@ -1,11 +1,10 @@
 use anyhow::Context;
-use ohim::{All, DOM, ohim::dom::event};
+use ohim::{All, WindowStates, ohim::dom::event};
 use std::{fs, path::Path};
-use wasmtime_wasi::p2::WasiCtx;
 
 use wasmtime::{
     Config, Engine, Result, Store,
-    component::{Component, HasSelf, Linker, ResourceTable},
+    component::{Component, HasSelf, Linker},
 };
 
 /// This function is only needed until rust can natively output a component.
@@ -27,15 +26,7 @@ fn main() -> Result<()> {
 
     // Create our component and call our generated host function.
     let component = Component::new(&engine, &component)?;
-    let store2 = Store::new(&engine, ());
-    let mut store = Store::new(
-        &engine,
-        DOM {
-            table: ResourceTable::new(),
-            ctx: WasiCtx::builder().build(),
-            store: store2,
-        },
-    );
+    let mut store = Store::new(&engine, WindowStates::create());
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::p2::add_to_linker_sync(&mut linker)?;
     event::add_to_linker::<_, HasSelf<_>>(&mut linker, |state| state)?;

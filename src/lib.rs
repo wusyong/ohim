@@ -20,13 +20,24 @@ pub struct Event {
     type_: String,
 }
 
-pub struct DOM {
-    pub table: ResourceTable,
-    pub ctx: WasiCtx,
-    pub store: Store<()>,
+/// `Store` states to use when `[Exposed=Window]`
+pub struct WindowStates {
+    table: ResourceTable,
+    ctx: WasiCtx,
+    store: Store<()>,
 }
 
-impl HostEvent for DOM {
+impl WindowStates {
+    pub fn create() -> Self {
+        Self {
+            table: ResourceTable::new(),
+            ctx: WasiCtx::builder().build(),
+            store: Store::<()>::default(),
+        }
+    }
+}
+
+impl HostEvent for WindowStates {
     fn new(&mut self, ty: String) -> Resource<DOMObject> {
         let data = DOMObject::new(&mut self.store, Event { type_: ty }).unwrap();
         self.table.push(data).unwrap()
@@ -43,15 +54,15 @@ impl HostEvent for DOM {
     }
 }
 
-impl Host for DOM {}
+impl Host for WindowStates {}
 
-impl IoView for DOM {
+impl IoView for WindowStates {
     fn table(&mut self) -> &mut ResourceTable {
         &mut self.table
     }
 }
 
-impl WasiView for DOM {
+impl WasiView for WindowStates {
     fn ctx(&mut self) -> &mut WasiCtx {
         &mut self.ctx
     }
