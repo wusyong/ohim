@@ -1,0 +1,8 @@
+package ohim:dom;
+
+interface event-target {
+    resource event-target {
+        constructor();
+        add-event-listener: func(ty: string, callback: string);
+    }
+}

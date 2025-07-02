@@ -1,29 +1,25 @@
-use event::Event;
-use object::Object;
+pub use event::Event;
+pub use event_target::EventTarget;
 use ohim::dom::event::Host;
-use wasmtime::{
-    Store,
-    component::{ResourceTable, bindgen},
-};
+use wasmtime::component::{ResourceTable, bindgen};
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 mod event;
-mod object;
+mod event_target;
+// mod object;
 
 bindgen!({
     path: "wit",
     with: {
-        "ohim:dom/event/event": EventObject,
+        "ohim:dom/event/event": Event,
+        "ohim:dom/event-target/event-target": EventTarget,
     }
 });
-
-pub type EventObject = Object<Event>;
 
 /// `Store` states to use when `[Exposed=Window]`
 pub struct WindowStates {
     table: ResourceTable,
     ctx: WasiCtx,
-    store: Store<()>,
 }
 
 impl WindowStates {
@@ -31,7 +27,6 @@ impl WindowStates {
         Self {
             table: ResourceTable::new(),
             ctx: WasiCtx::builder().build(),
-            store: Store::<()>::default(),
         }
     }
 }

@@ -2,5 +2,12 @@ package ohim:dom;
 
 world imports {
     import event;
+    import event-target;
     export test: func() -> string;
+
+    // FIXME: Workaround of callback until scoped callback is supported:
+    // https://github.com/WebAssembly/component-model/issues/412
+    import register-callback: func(name: string);
+    import unregister-callback: func(name: string);
+    export call-callback: func(name: string, args: list<string>) -> string;
 }
