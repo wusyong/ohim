@@ -3,12 +3,12 @@ use std::{any::Any, marker::PhantomData};
 use wasmtime::{AsContextMut, Error, ExternRef, GcHeapOutOfMemory, Result, Rooted, StoreContext};
 
 /// A DOM Object is a GC traced data object.
-pub struct DOMObject<T: 'static + Any + Send + Sync> {
+pub struct Object<T: 'static + Any + Send + Sync> {
     object: Rooted<ExternRef>,
     _phantom: PhantomData<T>,
 }
 
-impl<T: 'static + Any + Send + Sync> DOMObject<T> {
+impl<T: 'static + Any + Send + Sync> Object<T> {
     pub fn new(mut context: impl AsContextMut, value: T) -> Result<Self> {
         let object = match ExternRef::new(&mut context, value) {
             Ok(x) => x,
