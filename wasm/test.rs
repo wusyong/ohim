@@ -3,7 +3,7 @@ use ohim::dom::event::Event;
 // cargo component build
 wit_bindgen::generate!({
     path: "../wit/",
-    world: "all",
+    world: "imports",
 });
 
 struct GuestComponent;

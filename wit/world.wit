@@ -1,0 +1,6 @@
+package ohim:dom;
+
+world imports {
+    import event;
+    export test: func() -> string;
+}

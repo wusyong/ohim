@@ -19,6 +19,6 @@ package = "ohim:dom"
 
 [package.metadata.component.target]
 path = "../wit"
-world = "all"
+world = "imports"
 
 [package.metadata.component.dependencies]

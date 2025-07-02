@@ -8,7 +8,7 @@ use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 mod dom_object;
 
 bindgen!({
-    path: "./wit/event.wit",
+    path: "wit",
     with: {
         "ohim:dom/event/event": DOMObject,
     }
