@@ -1,18 +1,16 @@
 use std::collections::HashMap;
 
-use wasmtime::{Result, component::Resource};
+use wasmtime::{AsContextMut, Result, component::Resource};
 
 use crate::{WindowStates, ohim::dom::event_target::HostEventTarget};
 
 pub struct EventTarget {
-    callbacks: HashMap<String, Vec<String>>,
+    callbacks: Option<HashMap<String, Vec<String>>>,
 }
 
 impl EventTarget {
     pub fn new() -> Self {
-        Self {
-            callbacks: HashMap::default(),
-        }
+        Self { callbacks: None }
     }
 }
 
@@ -22,7 +20,8 @@ pub trait EventTargetMethods {
 
 impl EventTargetMethods for EventTarget {
     fn add_event_listener(&mut self, ty: String, callback: String) {
-        self.callbacks
+        let callbacks = self.callbacks.get_or_insert_default();
+        callbacks
             .entry(ty)
             .and_modify(|v| v.push(callback.clone()))
             .or_insert(vec![callback]);

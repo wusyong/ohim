@@ -63,7 +63,7 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
             .ok_or_else(|| Error::msg("externref was not requested type"))
     }
 
-    pub fn as_externref(&self) -> Rooted<ExternRef> {
+    pub fn to_externref(&self) -> Rooted<ExternRef> {
         self.object
     }
 }

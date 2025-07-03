@@ -10,6 +10,8 @@ use crate::{
 #[derive(Clone)]
 pub struct Node(Object<NodeImpl>);
 
+pub type NodeObject = Rooted<ExternRef>;
+
 impl Node {
     pub fn new(context: impl AsContextMut) -> Result<Self> {
         let node = NodeImpl::new();
@@ -19,7 +21,7 @@ impl Node {
 
 pub struct NodeImpl {
     event_target: EventTarget,
-    child_node: Option<Rooted<ExternRef>>,
+    child_node: Option<NodeObject>,
 }
 
 impl NodeImpl {
@@ -31,20 +33,10 @@ impl NodeImpl {
     }
 }
 
-pub trait NodeMethods<'a, T: 'static> {
-    fn append_child(&mut self, child: Self, store: impl Into<StoreContextMut<'a, T>>);
-}
-
-impl<'a, T: 'static> NodeMethods<'a, T> for Node {
-    fn append_child(&mut self, child: Self, store: impl Into<StoreContextMut<'a, T>>) {
-        let node = self.0.data_mut(store).unwrap();
-        node.child_node = Some(child.0.as_externref());
-    }
-}
-
-impl EventTargetMethods for NodeImpl {
-    fn add_event_listener(&mut self, ty: String, callback: String) {
-        self.event_target.add_event_listener(ty, callback);
+impl Node {
+    fn append_child(&mut self, child: Self, mut store: impl AsContextMut) {
+        let node = self.0.data_mut(&mut store).unwrap();
+        node.child_node = Some(child.0.to_externref());
     }
 }
 
@@ -58,7 +50,7 @@ impl HostNode for WindowStates {
     fn append_child(&mut self, self_: Resource<Node>, child: Resource<Node>) -> Resource<Node> {
         let mut self_ = self.table.get(&self_).unwrap().clone();
         let child_ = self.table.get(&child).unwrap();
-        NodeMethods::append_child(&mut self_, child_.clone(), &mut self.store);
+        Node::append_child(&mut self_, child_.clone(), &mut self.store);
         child
     }
 
