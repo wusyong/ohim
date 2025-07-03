@@ -16,4 +16,9 @@ impl Guest for GuestComponent {
         let x = Event::new("hello");
         x.get_type()
     }
+
+    #[allow(async_fn_in_trait)]
+    fn call_callback(name: String, args: Vec<String>) -> String {
+        todo!()
+    }
 }

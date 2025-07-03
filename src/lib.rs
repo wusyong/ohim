@@ -1,18 +1,24 @@
 pub use event::Event;
 pub use event_target::EventTarget;
+pub use node::Node;
 use ohim::dom::event::Host;
-use wasmtime::component::{ResourceTable, bindgen};
+use wasmtime::{
+    Store,
+    component::{ResourceTable, bindgen},
+};
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 mod event;
 mod event_target;
-// mod object;
+mod node;
+mod object;
 
 bindgen!({
     path: "wit",
     with: {
         "ohim:dom/event/event": Event,
         "ohim:dom/event-target/event-target": EventTarget,
+        "ohim:dom/node/node": Node,
     }
 });
 
@@ -20,6 +26,7 @@ bindgen!({
 pub struct WindowStates {
     table: ResourceTable,
     ctx: WasiCtx,
+    store: Store<()>,
 }
 
 impl WindowStates {
@@ -27,6 +34,7 @@ impl WindowStates {
         Self {
             table: ResourceTable::new(),
             ctx: WasiCtx::builder().build(),
+            store: Store::<()>::default(),
         }
     }
 }

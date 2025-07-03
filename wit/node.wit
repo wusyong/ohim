@@ -1,0 +1,8 @@
+package ohim:dom;
+
+interface node {
+    resource node {
+        constructor();
+        append-child: func(child: node) -> node;
+    }
+}
