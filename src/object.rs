@@ -1,4 +1,4 @@
-use std::{any::Any, marker::PhantomData};
+use std::{any::Any, marker::PhantomData, ops::Deref};
 
 use wasmtime::{
     AsContextMut, Error, ExternRef, GcHeapOutOfMemory, Result, Rooted, StoreContext,
@@ -52,7 +52,15 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
             .ok_or_else(|| Error::msg("externref was not requested type"))
     }
 
-    pub fn data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> Result<&'a mut T>
+    pub fn data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> &'a mut T
+    where
+        U: 'static,
+    {
+        self.try_data_mut(store)
+            .expect("externref was not requested type")
+    }
+
+    pub fn try_data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> Result<&'a mut T>
     where
         U: 'static,
     {
@@ -62,8 +70,12 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
             .downcast_mut::<T>()
             .ok_or_else(|| Error::msg("externref was not requested type"))
     }
+}
 
-    pub fn to_externref(&self) -> Rooted<ExternRef> {
-        self.object
+impl<T: 'static + Any + Send + Sync> Deref for Object<T> {
+    type Target = Rooted<ExternRef>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.object
     }
 }

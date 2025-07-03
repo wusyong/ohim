@@ -1,61 +1,99 @@
-use wasmtime::{
-    AsContextMut, ExternRef, Result, Rooted, StoreContext, StoreContextMut, component::Resource,
-};
+use std::ops::Deref;
 
-use crate::{
-    EventTarget, WindowStates, event_target::EventTargetMethods, object::Object,
-    ohim::dom::node::HostNode,
-};
+use wasmtime::{AsContextMut, ExternRef, Result, Rooted, RootedGcRef};
+
+use crate::{EventTarget, object::Object};
 
 #[derive(Clone)]
-pub struct Node(Object<NodeImpl>);
+pub struct Node(pub Object<NodeImpl>);
 
-pub type NodeObject = Rooted<ExternRef>;
-
+// TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Node {
-    pub fn new(context: impl AsContextMut) -> Result<Self> {
-        let node = NodeImpl::new();
-        Ok(Self(Object::new(context, node)?))
+    /// <https://dom.spec.whatwg.org/#concept-node-append>
+    pub fn append(&self, node: &Node, store: impl AsContextMut) -> Node {
+        // To append a node to a parent, pre-insert node into parent before null.
+        self.pre_insert(node, None, store)
+    }
+
+    /// <https://dom.spec.whatwg.org/#concept-node-pre-insert>
+    pub fn pre_insert(
+        &self,
+        node: &Node,
+        child: Option<&Node>,
+        mut store: impl AsContextMut,
+    ) -> Node {
+        // To pre-insert a node into a parent before a child, run these steps:
+        // TODO:
+        // 1. Ensure pre-insert validity of node into parent before child.
+
+        // 2. Let referenceChild be child.
+        // 3. If referenceChild is node, then set referenceChild to node’s next sibling.
+        if let Some(reference) = child {
+            if let Ok(true) = Rooted::ref_eq(&store, reference.as_root(), node.as_root()) {
+                let node = node.data_mut(&mut store);
+                node.next_sibling = Some(reference.clone());
+            }
+        }
+
+        // TODO:
+        // 4. Insert node into parent before referenceChild.
+
+        // 5. Return node.
+        node.clone()
+    }
+
+    pub fn as_root(&self) -> &Rooted<ExternRef> {
+        &***self
     }
 }
 
+impl Deref for Node {
+    type Target = Object<NodeImpl>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+// Present as a Node, Element, Document, and more that inhert Node.
 pub struct NodeImpl {
     event_target: EventTarget,
-    child_node: Option<NodeObject>,
+    parent_node: Option<Node>,
+    first_child: Option<Node>,
+    last_child: Option<Node>,
+    previous_sibling: Option<Node>,
+    next_sibling: Option<Node>,
 }
 
 impl NodeImpl {
     pub fn new() -> Self {
         NodeImpl {
             event_target: EventTarget::new(),
-            child_node: None,
+            parent_node: None,
+            first_child: None,
+            last_child: None,
+            previous_sibling: None,
+            next_sibling: None,
         }
     }
 }
 
-impl Node {
-    fn append_child(&mut self, child: Self, mut store: impl AsContextMut) {
-        let node = self.0.data_mut(&mut store).unwrap();
-        node.child_node = Some(child.0.to_externref());
-    }
-}
-
-impl HostNode for WindowStates {
-    fn new(&mut self) -> Resource<Node> {
-        self.table
-            .push(Node::new(&mut self.store).unwrap())
-            .unwrap()
-    }
-
-    fn append_child(&mut self, self_: Resource<Node>, child: Resource<Node>) -> Resource<Node> {
-        let mut self_ = self.table.get(&self_).unwrap().clone();
-        let child_ = self.table.get(&child).unwrap();
-        Node::append_child(&mut self_, child_.clone(), &mut self.store);
-        child
-    }
-
-    fn drop(&mut self, rep: Resource<Node>) -> Result<()> {
-        self.table.delete(rep)?;
-        Ok(())
-    }
-}
+// impl HostNode for WindowStates {
+//     fn new(&mut self) -> Resource<Node> {
+//         self.table
+//             .push(Node::new(&mut self.store).unwrap())
+//             .unwrap()
+//     }
+//
+//     fn append_child(&mut self, self_: Resource<Node>, child: Resource<Node>) -> Resource<Node> {
+//         let mut self_ = self.table.get(&self_).unwrap().clone();
+//         let child_ = self.table.get(&child).unwrap();
+//         Node::append_child(&mut self_, child_.clone(), &mut self.store);
+//         child
+//     }
+//
+//     fn drop(&mut self, rep: Resource<Node>) -> Result<()> {
+//         self.table.delete(rep)?;
+//         Ok(())
+//     }
+// }
