@@ -1,14 +1,21 @@
 use wasmtime::{Result, component::Resource};
 
-use crate::{WindowStates, ohim::dom::event::HostEvent};
+use crate::{EventTarget, WindowStates, ohim::dom::event::HostEvent};
 
 pub struct Event {
     type_: String,
+    // TODO: Should be a enum type
+    target: Option<EventTarget>,
 }
 
 impl HostEvent for WindowStates {
     fn new(&mut self, ty: String) -> Resource<Event> {
-        self.table.push(Event { type_: ty }).unwrap()
+        self.table
+            .push(Event {
+                type_: ty,
+                target: None,
+            })
+            .unwrap()
     }
 
     fn drop(&mut self, rep: Resource<Event>) -> Result<()> {
