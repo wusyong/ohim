@@ -5,7 +5,11 @@ use wasmtime::{
     StoreContextMut,
 };
 
-/// A DOM Object is a GC traced data object.
+/// This is a GC traced object represented as a DOM object.
+///
+/// An `Object` is basically `Rooted<ExternRef>` with the type annotation preserved in
+/// `PhantomData<T>`. This helps users understand what's the actual implementation of the object.
+/// It can also dereference to `Rooted<ExternRef>`.
 #[derive(Copy, Debug)]
 pub struct Object<T: 'static + Any + Send + Sync> {
     object: Rooted<ExternRef>,
@@ -22,6 +26,7 @@ impl<T: 'static + Any + Send + Sync> Clone for Object<T> {
 }
 
 impl<T: 'static + Any + Send + Sync> Object<T> {
+    /// Create an GC traced `Object` from provided value.
     pub fn new(mut context: impl AsContextMut, value: T) -> Result<Self> {
         let object = match ExternRef::new(&mut context, value) {
             Ok(x) => x,
@@ -41,7 +46,16 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
         })
     }
 
-    pub fn data<'a, U>(&self, store: impl Into<StoreContext<'a, U>>) -> Result<&'a T>
+    /// Get a shared borrow of the underlying data for this `ExternRef`.
+    pub fn data<'a, U>(&self, store: impl Into<StoreContext<'a, U>>) -> &'a T
+    where
+        U: 'static,
+    {
+        self.try_data(store)
+            .expect("externref was not requested type")
+    }
+
+    fn try_data<'a, U>(&self, store: impl Into<StoreContext<'a, U>>) -> Result<&'a T>
     where
         U: 'static,
     {
@@ -60,7 +74,8 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
             .expect("externref was not requested type")
     }
 
-    pub fn try_data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> Result<&'a mut T>
+    ///  Get an exclusive borrow of the underlying data for this `Object`.
+    fn try_data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> Result<&'a mut T>
     where
         U: 'static,
     {

@@ -1,11 +1,12 @@
 use std::ops::Deref;
 
-use wasmtime::{AsContextMut, ExternRef, Result, Rooted, RootedGcRef};
+use wasmtime::{AsContextMut, ExternRef, Rooted};
 
 use crate::{EventTarget, object::Object};
 
-#[derive(Clone)]
-pub struct Node(pub Object<NodeImpl>);
+/// A `Node` Object is a wrapper around `Object<NodeImpl>`.
+#[derive(Clone, Debug)]
+pub struct Node(Object<NodeImpl>);
 
 // TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Node {
@@ -42,6 +43,7 @@ impl Node {
         node.clone()
     }
 
+    /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         &***self
     }
@@ -55,7 +57,9 @@ impl Deref for Node {
     }
 }
 
-// Present as a Node, Element, Document, and more that inhert Node.
+/// Implementation of acutal `Node` object. It also contains data of types that inherent `Node`
+/// like `Document`, `Element`, `Attr`... etc. So it can also present as these types.
+#[derive(Debug)]
 pub struct NodeImpl {
     event_target: EventTarget,
     parent_node: Option<Node>,

@@ -1,5 +1,5 @@
 use anyhow::Context;
-use ohim::{Imports, WindowStates, ohim::dom::event};
+// use ohim::{Imports, WindowStates, ohim::dom::event};
 use std::{fs, path::Path};
 
 use wasmtime::{
@@ -24,14 +24,14 @@ fn main() -> Result<()> {
 
     let component = convert_to_component("target/wasm32-wasip1/debug/test.wasm")?;
 
-    // Create our component and call our generated host function.
-    let component = Component::new(&engine, &component)?;
-    let mut store = Store::new(&engine, WindowStates::create());
-    let mut linker = Linker::new(&engine);
-    wasmtime_wasi::p2::add_to_linker_sync(&mut linker)?;
-    event::add_to_linker::<_, HasSelf<_>>(&mut linker, |state| state)?;
-    let convert = Imports::instantiate(&mut store, &component, &linker)?;
-    let result = convert.call_test(&mut store)?;
-    println!("Converted to: {result:?}");
+    // // Create our component and call our generated host function.
+    // let component = Component::new(&engine, &component)?;
+    // let mut store = Store::new(&engine, WindowStates::create());
+    // let mut linker = Linker::new(&engine);
+    // wasmtime_wasi::p2::add_to_linker_sync(&mut linker)?;
+    // event::add_to_linker::<_, HasSelf<_>>(&mut linker, |state| state)?;
+    // let convert = Imports::instantiate(&mut store, &component, &linker)?;
+    // let result = convert.call_test(&mut store)?;
+    // println!("Converted to: {result:?}");
     Ok(())
 }

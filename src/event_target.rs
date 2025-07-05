@@ -1,14 +1,18 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
-use wasmtime::{AsContext, AsContextMut, Result, component::Resource};
+use wasmtime::{AsContext, AsContextMut};
 
-use crate::{Event, WindowStates, ohim::dom::event_target::HostEventTarget};
+use crate::Event;
+// use crate::{Event, WindowStates, ohim::dom::event_target::HostEventTarget};
 
+/// <https://dom.spec.whatwg.org/#eventtarget>
+#[derive(Debug)]
 pub struct EventTarget {
     callbacks: Option<HashMap<String, EventListener>>,
 }
 
 impl EventTarget {
+    /// Create an `EventTarget` with empty `EventListener`.
     pub fn new() -> Self {
         Self { callbacks: None }
     }
@@ -18,6 +22,12 @@ impl EventTarget {
     fn add_listener(&mut self, ty: String, callback: EventListener, store: impl AsContextMut) {}
     fn remove_listener(&mut self, ty: String, callback: EventListener, store: impl AsContextMut) {}
     fn dispatch(&self, event: Event) {}
+}
+
+impl Debug for EventListener {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }
 
 /// For Object type to implement
@@ -35,11 +45,11 @@ pub trait EventTargetMethods {
 /// <https://dom.spec.whatwg.org/#callbackdef-eventlistener>
 pub struct EventListener(Box<dyn FnMut(Event) + Send + Sync>);
 
-impl EventListener {
-    fn call(&mut self, event: Event) {
-        self.0(event)
-    }
-}
+// impl EventListener {
+//     fn call(&mut self, event: Event) {
+//         self.0(event)
+//     }
+// }
 
 // impl EventTargetMethods
 //     fn add_event_listener(&mut self, ty: String, callback: String) {
