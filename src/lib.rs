@@ -7,6 +7,7 @@
     unreachable_pub
 )]
 
+pub use document::*;
 pub use event::*;
 pub use event_target::*;
 pub use node::*;
@@ -18,6 +19,7 @@ pub use object::*;
 // };
 // use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
+mod document;
 mod event;
 mod event_target;
 mod node;

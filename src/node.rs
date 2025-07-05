@@ -2,9 +2,9 @@ use std::ops::Deref;
 
 use wasmtime::{AsContextMut, ExternRef, Rooted};
 
-use crate::{EventTarget, object::Object};
+use crate::{EventTarget, document::DocumentImpl, object::Object};
 
-/// A `Node` Object is a wrapper around `Object<NodeImpl>`.
+/// <https://dom.spec.whatwg.org/#node>
 #[derive(Clone, Debug)]
 pub struct Node(Object<NodeImpl>);
 
@@ -67,6 +67,7 @@ pub struct NodeImpl {
     last_child: Option<Node>,
     previous_sibling: Option<Node>,
     next_sibling: Option<Node>,
+    pub(crate) data: NodeTypeData,
 }
 
 impl NodeImpl {
@@ -79,8 +80,19 @@ impl NodeImpl {
             last_child: None,
             previous_sibling: None,
             next_sibling: None,
+            data: NodeTypeData::None,
         }
     }
+}
+
+/// The actual implementation of each node type
+#[derive(Debug, Default)]
+pub enum NodeTypeData {
+    /// `DOCUMENT_NODE`
+    Document(DocumentImpl),
+    /// Similer to `Option::None`.
+    #[default]
+    None,
 }
 
 // impl HostNode for WindowStates {
