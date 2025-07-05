@@ -1,3 +1,5 @@
+//! Ohim is Webassembly based web script engine.
+
 #![warn(
     missing_debug_implementations,
     missing_docs,
@@ -5,9 +7,10 @@
     unreachable_pub
 )]
 
-pub use event::Event;
-pub use event_target::EventTarget;
-pub use node::Node;
+pub use event::*;
+pub use event_target::*;
+pub use node::*;
+pub use object::*;
 // use ohim::dom::event::Host;
 // use wasmtime::{
 //     Store,

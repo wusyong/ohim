@@ -1,12 +1,11 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
-use wasmtime::{AsContext, AsContextMut};
+use wasmtime::AsContextMut;
 
-use crate::Event;
-// use crate::{Event, WindowStates, ohim::dom::event_target::HostEventTarget};
+use crate::{Event, Node};
 
 /// <https://dom.spec.whatwg.org/#eventtarget>
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct EventTarget {
     callbacks: Option<HashMap<String, EventListener>>,
 }
@@ -19,31 +18,43 @@ impl EventTarget {
 }
 
 impl EventTarget {
-    fn add_listener(&mut self, ty: String, callback: EventListener, store: impl AsContextMut) {}
-    fn remove_listener(&mut self, ty: String, callback: EventListener, store: impl AsContextMut) {}
-    fn dispatch(&self, event: Event) {}
-}
-
-impl Debug for EventListener {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+    fn add_event_listener(
+        &mut self,
+        ty: String,
+        callback: EventListener,
+        store: impl AsContextMut,
+    ) {
     }
-}
-
-/// For Object type to implement
-pub trait EventTargetMethods {
-    fn add_event_listener(&mut self, ty: String, callback: EventListener, store: impl AsContextMut);
     fn remove_event_listener(
         &mut self,
         ty: String,
         callback: EventListener,
         store: impl AsContextMut,
-    );
-    fn dispatch_event(&self, store: impl AsContext);
+    ) {
+    }
+    fn dispatch_event(&self, event: Event) {}
 }
 
 /// <https://dom.spec.whatwg.org/#callbackdef-eventlistener>
-pub struct EventListener(Box<dyn FnMut(Event) + Send + Sync>);
+#[derive(Clone)]
+pub struct EventListener(Arc<dyn FnMut(Event) + Send + Sync>);
+
+impl Debug for EventListener {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("...")
+    }
+}
+
+/// Types that inherent `EventTarget` and can be added to `Event`'s target fields.
+///
+/// See <https://dontcallmedom.github.io/webidlpedia/names/EventTarget.html> for full list.
+#[derive(Clone, Debug)]
+pub enum IsEventTarget {
+    /// `EventTarget`
+    EventTarget(EventTarget),
+    /// `Node`
+    Node(Node),
+}
 
 // impl EventListener {
 //     fn call(&mut self, event: Event) {

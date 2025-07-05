@@ -46,7 +46,7 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
         })
     }
 
-    /// Get a shared borrow of the underlying data for this `ExternRef`.
+    /// Get a shared borrow of the underlying data for this `Object`.
     pub fn data<'a, U>(&self, store: impl Into<StoreContext<'a, U>>) -> &'a T
     where
         U: 'static,
@@ -66,6 +66,7 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
             .ok_or_else(|| Error::msg("externref was not requested type"))
     }
 
+    ///  Get an exclusive borrow of the underlying data for this `Object`.
     pub fn data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> &'a mut T
     where
         U: 'static,
@@ -74,7 +75,6 @@ impl<T: 'static + Any + Send + Sync> Object<T> {
             .expect("externref was not requested type")
     }
 
-    ///  Get an exclusive borrow of the underlying data for this `Object`.
     fn try_data_mut<'a, U>(&self, store: impl Into<StoreContextMut<'a, U>>) -> Result<&'a mut T>
     where
         U: 'static,

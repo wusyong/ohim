@@ -70,6 +70,7 @@ pub struct NodeImpl {
 }
 
 impl NodeImpl {
+    /// Create an empty `NodeImpl`.
     pub fn new() -> Self {
         NodeImpl {
             event_target: EventTarget::new(),

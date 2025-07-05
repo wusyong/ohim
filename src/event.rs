@@ -1,12 +1,10 @@
-use wasmtime::{Result, component::Resource};
+use crate::event_target::IsEventTarget;
 
-// use crate::{EventTarget, WindowStates, ohim::dom::event::HostEvent};
-use crate::EventTarget;
-
+/// <https://dom.spec.whatwg.org/#event>
+#[derive(Clone, Debug)]
 pub struct Event {
     type_: String,
-    // TODO: Should be a enum type
-    target: Option<EventTarget>,
+    target: Option<IsEventTarget>,
 }
 
 // impl HostEvent for WindowStates {
