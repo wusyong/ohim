@@ -1,16 +1,16 @@
 use std::ops::Deref;
 
-use wasmtime::{AsContext, AsContextMut, ExternRef, Rooted};
+use wasmtime::{AsContext, ExternRef, Rooted};
 
-use crate::{EventTarget, NodeImpl, NodeTypeData, object::Object};
+use crate::{Element, NodeImpl, NodeTypeData, object::Object};
 
-/// <https://dom.spec.whatwg.org/#node>
+/// <https://dom.spec.whatwg.org/#document>
 #[derive(Clone, Debug)]
 pub struct Document(Object<NodeImpl>);
 
 // TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Document {
-    /// TODO: link to spec
+    /// <https://dom.spec.whatwg.org/#dom-document-url>
     pub fn url(&self, store: impl AsContext) -> String {
         self.data(&store).as_document().url.clone()
     }
@@ -50,11 +50,15 @@ impl Deref for Document {
 #[derive(Debug)]
 pub struct DocumentImpl {
     url: String,
+    parent_element: Option<Element>,
 }
 
 impl DocumentImpl {
     /// Create an empty `DocumentImpl`.
     pub fn new() -> Self {
-        DocumentImpl { url: String::new() }
+        DocumentImpl {
+            url: String::new(),
+            parent_element: None,
+        }
     }
 }

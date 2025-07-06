@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use wasmtime::{AsContextMut, ExternRef, Rooted};
 
-use crate::{EventTarget, document::DocumentImpl, object::Object};
+use crate::{EventTarget, document::DocumentImpl, element::ElementImpl, object::Object};
 
 /// <https://dom.spec.whatwg.org/#node>
 #[derive(Clone, Debug)]
@@ -88,6 +88,8 @@ impl NodeImpl {
 /// The actual implementation of each node type
 #[derive(Debug, Default)]
 pub enum NodeTypeData {
+    /// `ELEMENT_NODE`
+    Element(ElementImpl),
     /// `DOCUMENT_NODE`
     Document(DocumentImpl),
     /// Similer to `Option::None`.

@@ -8,6 +8,7 @@
 )]
 
 pub use document::*;
+pub use element::*;
 pub use event::*;
 pub use event_target::*;
 pub use node::*;
@@ -20,6 +21,7 @@ pub use object::*;
 // use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 mod document;
+mod element;
 mod event;
 mod event_target;
 mod node;
