@@ -246,6 +246,113 @@ pub mod ohim {
             }
         }
         #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+        pub mod event_target {
+            #[used]
+            #[doc(hidden)]
+            static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
+            use super::super::super::_rt;
+            #[derive(Debug)]
+            #[repr(transparent)]
+            pub struct EventTarget {
+                handle: _rt::Resource<EventTarget>,
+            }
+            impl EventTarget {
+                #[doc(hidden)]
+                pub unsafe fn from_handle(handle: u32) -> Self {
+                    Self {
+                        handle: unsafe { _rt::Resource::from_handle(handle) },
+                    }
+                }
+                #[doc(hidden)]
+                pub fn take_handle(&self) -> u32 {
+                    _rt::Resource::take_handle(&self.handle)
+                }
+                #[doc(hidden)]
+                pub fn handle(&self) -> u32 {
+                    _rt::Resource::handle(&self.handle)
+                }
+            }
+            unsafe impl _rt::WasmResource for EventTarget {
+                #[inline]
+                unsafe fn drop(_handle: u32) {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unreachable!();
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        #[link(wasm_import_module = "ohim:dom/event-target")]
+                        unsafe extern "C" {
+                            #[link_name = "[resource-drop]event-target"]
+                            fn drop(_: u32);
+                        }
+                        unsafe { drop(_handle) };
+                    }
+                }
+            }
+            impl EventTarget {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn new() -> Self {
+                    unsafe {
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "ohim:dom/event-target")]
+                        unsafe extern "C" {
+                            #[link_name = "[constructor]event-target"]
+                            fn wit_import0() -> i32;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import0() -> i32 {
+                            unreachable!()
+                        }
+                        let ret = unsafe { wit_import0() };
+                        unsafe { EventTarget::from_handle(ret as u32) }
+                    }
+                }
+            }
+            impl EventTarget {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn add_event_listener(&self, ty: &str, callback: &str) -> () {
+                    unsafe {
+                        let vec0 = ty;
+                        let ptr0 = vec0.as_ptr().cast::<u8>();
+                        let len0 = vec0.len();
+                        let vec1 = callback;
+                        let ptr1 = vec1.as_ptr().cast::<u8>();
+                        let len1 = vec1.len();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "ohim:dom/event-target")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]event-target.add-event-listener"]
+                            fn wit_import2(
+                                _: i32,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                            );
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import2(
+                            _: i32,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                        ) {
+                            unreachable!()
+                        }
+                        unsafe {
+                            wit_import2(
+                                (self).handle() as i32,
+                                ptr0.cast_mut(),
+                                len0,
+                                ptr1.cast_mut(),
+                                len1,
+                            )
+                        };
+                    }
+                }
+            }
+        }
+        #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
         pub mod node {
             #[used]
             #[doc(hidden)]
@@ -288,22 +395,77 @@ pub mod ohim {
                     }
                 }
             }
-            impl Node {
-                #[allow(unused_unsafe, clippy::all)]
-                pub fn new() -> Self {
-                    unsafe {
-                        #[cfg(target_arch = "wasm32")]
+            #[derive(Debug)]
+            #[repr(transparent)]
+            pub struct Document {
+                handle: _rt::Resource<Document>,
+            }
+            impl Document {
+                #[doc(hidden)]
+                pub unsafe fn from_handle(handle: u32) -> Self {
+                    Self {
+                        handle: unsafe { _rt::Resource::from_handle(handle) },
+                    }
+                }
+                #[doc(hidden)]
+                pub fn take_handle(&self) -> u32 {
+                    _rt::Resource::take_handle(&self.handle)
+                }
+                #[doc(hidden)]
+                pub fn handle(&self) -> u32 {
+                    _rt::Resource::handle(&self.handle)
+                }
+            }
+            unsafe impl _rt::WasmResource for Document {
+                #[inline]
+                unsafe fn drop(_handle: u32) {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unreachable!();
+                    #[cfg(target_arch = "wasm32")]
+                    {
                         #[link(wasm_import_module = "ohim:dom/node")]
                         unsafe extern "C" {
-                            #[link_name = "[constructor]node"]
-                            fn wit_import0() -> i32;
+                            #[link_name = "[resource-drop]document"]
+                            fn drop(_: u32);
                         }
-                        #[cfg(not(target_arch = "wasm32"))]
-                        unsafe extern "C" fn wit_import0() -> i32 {
-                            unreachable!()
+                        unsafe { drop(_handle) };
+                    }
+                }
+            }
+            #[derive(Debug)]
+            #[repr(transparent)]
+            pub struct Element {
+                handle: _rt::Resource<Element>,
+            }
+            impl Element {
+                #[doc(hidden)]
+                pub unsafe fn from_handle(handle: u32) -> Self {
+                    Self {
+                        handle: unsafe { _rt::Resource::from_handle(handle) },
+                    }
+                }
+                #[doc(hidden)]
+                pub fn take_handle(&self) -> u32 {
+                    _rt::Resource::take_handle(&self.handle)
+                }
+                #[doc(hidden)]
+                pub fn handle(&self) -> u32 {
+                    _rt::Resource::handle(&self.handle)
+                }
+            }
+            unsafe impl _rt::WasmResource for Element {
+                #[inline]
+                unsafe fn drop(_handle: u32) {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unreachable!();
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        #[link(wasm_import_module = "ohim:dom/node")]
+                        unsafe extern "C" {
+                            #[link_name = "[resource-drop]element"]
+                            fn drop(_: u32);
                         }
-                        let ret = unsafe { wit_import0() };
-                        unsafe { Node::from_handle(ret as u32) }
+                        unsafe { drop(_handle) };
                     }
                 }
             }
@@ -328,6 +490,119 @@ pub mod ohim {
                             )
                         };
                         unsafe { Node::from_handle(ret as u32) }
+                    }
+                }
+            }
+            impl Document {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn new() -> Self {
+                    unsafe {
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "ohim:dom/node")]
+                        unsafe extern "C" {
+                            #[link_name = "[constructor]document"]
+                            fn wit_import0() -> i32;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import0() -> i32 {
+                            unreachable!()
+                        }
+                        let ret = unsafe { wit_import0() };
+                        unsafe { Document::from_handle(ret as u32) }
+                    }
+                }
+            }
+            impl Document {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn url(&self) -> _rt::String {
+                    unsafe {
+                        #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                        #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                        struct RetArea(
+                            [::core::mem::MaybeUninit<
+                                u8,
+                            >; 2 * ::core::mem::size_of::<*const u8>()],
+                        );
+                        let mut ret_area = RetArea(
+                            [::core::mem::MaybeUninit::uninit(); 2
+                                * ::core::mem::size_of::<*const u8>()],
+                        );
+                        let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "ohim:dom/node")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]document.url"]
+                            fn wit_import1(_: i32, _: *mut u8);
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import1(_: i32, _: *mut u8) {
+                            unreachable!()
+                        }
+                        unsafe { wit_import1((self).handle() as i32, ptr0) };
+                        let l2 = *ptr0.add(0).cast::<*mut u8>();
+                        let l3 = *ptr0
+                            .add(::core::mem::size_of::<*const u8>())
+                            .cast::<usize>();
+                        let len4 = l3;
+                        let bytes4 = _rt::Vec::from_raw_parts(l2.cast(), len4, len4);
+                        let result5 = _rt::string_lift(bytes4);
+                        result5
+                    }
+                }
+            }
+            impl Document {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn parent_element(&self) -> Option<Element> {
+                    unsafe {
+                        #[repr(align(4))]
+                        struct RetArea([::core::mem::MaybeUninit<u8>; 8]);
+                        let mut ret_area = RetArea(
+                            [::core::mem::MaybeUninit::uninit(); 8],
+                        );
+                        let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "ohim:dom/node")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]document.parent-element"]
+                            fn wit_import1(_: i32, _: *mut u8);
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import1(_: i32, _: *mut u8) {
+                            unreachable!()
+                        }
+                        unsafe { wit_import1((self).handle() as i32, ptr0) };
+                        let l2 = i32::from(*ptr0.add(0).cast::<u8>());
+                        let result4 = match l2 {
+                            0 => None,
+                            1 => {
+                                let e = {
+                                    let l3 = *ptr0.add(4).cast::<i32>();
+                                    unsafe { Element::from_handle(l3 as u32) }
+                                };
+                                Some(e)
+                            }
+                            _ => _rt::invalid_enum_discriminant(),
+                        };
+                        result4
+                    }
+                }
+            }
+            impl Element {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn has_attributes(&self) -> bool {
+                    unsafe {
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "ohim:dom/node")]
+                        unsafe extern "C" {
+                            #[link_name = "[method]element.has-attributes"]
+                            fn wit_import0(_: i32) -> i32;
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        unsafe extern "C" fn wit_import0(_: i32) -> i32 {
+                            unreachable!()
+                        }
+                        let ret = unsafe { wit_import0((self).handle() as i32) };
+                        _rt::bool_lift(ret as u8)
                     }
                 }
             }
@@ -420,6 +695,24 @@ mod _rt {
             String::from_utf8_unchecked(bytes)
         }
     }
+    pub unsafe fn invalid_enum_discriminant<T>() -> T {
+        if cfg!(debug_assertions) {
+            panic!("invalid enum discriminant")
+        } else {
+            unsafe { core::hint::unreachable_unchecked() }
+        }
+    }
+    pub unsafe fn bool_lift(val: u8) -> bool {
+        if cfg!(debug_assertions) {
+            match val {
+                0 => false,
+                1 => true,
+                _ => panic!("invalid bool discriminant"),
+            }
+        } else {
+            val != 0
+        }
+    }
     #[cfg(target_arch = "wasm32")]
     pub fn run_ctors_once() {
         wit_bindgen_rt::run_ctors_once();
@@ -469,18 +762,25 @@ pub(crate) use __export_imports_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 481] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe3\x02\x01A\x02\x01\
-A\x0c\x01B\x07\x04\0\x05event\x03\x01\x01i\0\x01@\x01\x02tys\0\x01\x04\0\x12[con\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 810] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xac\x05\x01A\x02\x01\
+A\x0e\x01B\x07\x04\0\x05event\x03\x01\x01i\0\x01@\x01\x02tys\0\x01\x04\0\x12[con\
 structor]event\x01\x02\x01h\0\x01@\x01\x04self\x03\0s\x04\0\x16[method]event.get\
--type\x01\x04\x03\0\x0eohim:dom/event\x05\0\x01B\x07\x04\0\x04node\x03\x01\x01i\0\
-\x01@\0\0\x01\x04\0\x11[constructor]node\x01\x02\x01h\0\x01@\x02\x04self\x03\x05\
-child\x01\0\x01\x04\0\x19[method]node.append-child\x01\x04\x03\0\x0dohim:dom/nod\
-e\x05\x01\x01@\x01\x04names\x01\0\x03\0\x11register-callback\x01\x02\x03\0\x13un\
-register-callback\x01\x02\x01@\0\0s\x04\0\x04test\x01\x03\x01ps\x01@\x02\x04name\
-s\x04args\x04\0s\x04\0\x0dcall-callback\x01\x05\x04\0\x10ohim:dom/imports\x04\0\x0b\
-\x0d\x01\0\x07imports\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-com\
-ponent\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+-type\x01\x04\x03\0\x0eohim:dom/event\x05\0\x01B\x07\x04\0\x0cevent-target\x03\x01\
+\x01i\0\x01@\0\0\x01\x04\0\x19[constructor]event-target\x01\x02\x01h\0\x01@\x03\x04\
+self\x03\x02tys\x08callbacks\x01\0\x04\0'[method]event-target.add-event-listener\
+\x01\x04\x03\0\x15ohim:dom/event-target\x05\x01\x01B\x14\x04\0\x04node\x03\x01\x04\
+\0\x08document\x03\x01\x04\0\x07element\x03\x01\x01h\0\x01i\0\x01@\x02\x04self\x03\
+\x05child\x04\0\x04\x04\0\x19[method]node.append-child\x01\x05\x01i\x01\x01@\0\0\
+\x06\x04\0\x15[constructor]document\x01\x07\x01h\x01\x01@\x01\x04self\x08\0s\x04\
+\0\x14[method]document.url\x01\x09\x01i\x02\x01k\x0a\x01@\x01\x04self\x08\0\x0b\x04\
+\0\x1f[method]document.parent-element\x01\x0c\x01h\x02\x01@\x01\x04self\x0d\0\x7f\
+\x04\0\x1e[method]element.has-attributes\x01\x0e\x03\0\x0dohim:dom/node\x05\x02\x01\
+@\x01\x04names\x01\0\x03\0\x11register-callback\x01\x03\x03\0\x13unregister-call\
+back\x01\x03\x01@\0\0s\x04\0\x04test\x01\x04\x01ps\x01@\x02\x04names\x04args\x05\
+\0s\x04\0\x0dcall-callback\x01\x06\x04\0\x10ohim:dom/imports\x04\0\x0b\x0d\x01\0\
+\x07imports\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x07\
+0.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-use wasmtime::{AsContext, ExternRef, Rooted};
+use wasmtime::{AsContext, ExternRef, Result, Rooted, component::Resource};
 
-use crate::{NodeImpl, NodeTypeData, object::Object};
+use crate::{NodeImpl, NodeTypeData, WindowStates, object::Object, ohim::dom::node::HostElement};
 
 /// <https://dom.spec.whatwg.org/#element>
 #[derive(Clone, Debug)]
@@ -59,5 +59,17 @@ impl ElementImpl {
         ElementImpl {
             attribute_list: Vec::new(),
         }
+    }
+}
+
+impl HostElement for WindowStates {
+    fn has_attributes(&mut self, self_: Resource<Element>) -> bool {
+        let self_ = self.table.get(&self_).unwrap();
+        self_.has_attributes(&self.store)
+    }
+
+    fn drop(&mut self, rep: Resource<Element>) -> Result<()> {
+        self.table.delete(rep)?;
+        Ok(())
     }
 }

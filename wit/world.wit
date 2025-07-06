@@ -1,8 +1,8 @@
 package ohim:dom;
 
 world imports {
-    import event;
-    import event-target;
+    //import event;
+    //import event-target;
     import node;
     export test: func() -> string;
 

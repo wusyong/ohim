@@ -1,8 +1,11 @@
 use std::ops::Deref;
 
-use wasmtime::{AsContextMut, ExternRef, Rooted};
+use wasmtime::{AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
-use crate::{EventTarget, document::DocumentImpl, element::ElementImpl, object::Object};
+use crate::{
+    EventTarget, WindowStates, document::DocumentImpl, element::ElementImpl, object::Object,
+    ohim::dom::node::HostNode,
+};
 
 /// <https://dom.spec.whatwg.org/#node>
 #[derive(Clone, Debug)]
@@ -97,22 +100,17 @@ pub enum NodeTypeData {
     None,
 }
 
-// impl HostNode for WindowStates {
-//     fn new(&mut self) -> Resource<Node> {
-//         self.table
-//             .push(Node::new(&mut self.store).unwrap())
-//             .unwrap()
-//     }
-//
-//     fn append_child(&mut self, self_: Resource<Node>, child: Resource<Node>) -> Resource<Node> {
-//         let mut self_ = self.table.get(&self_).unwrap().clone();
-//         let child_ = self.table.get(&child).unwrap();
-//         Node::append_child(&mut self_, child_.clone(), &mut self.store);
-//         child
-//     }
-//
-//     fn drop(&mut self, rep: Resource<Node>) -> Result<()> {
-//         self.table.delete(rep)?;
-//         Ok(())
-//     }
-// }
+impl HostNode for WindowStates {
+    fn append_child(&mut self, self_: Resource<Node>, child: Resource<Node>) -> Resource<Node> {
+        // TODO: properly handle error for all host traits
+        let self_ = self.table.get(&self_).unwrap();
+        let child_ = self.table.get(&child).unwrap();
+        self_.append(&child_, &mut self.store);
+        child
+    }
+
+    fn drop(&mut self, rep: Resource<Node>) -> Result<()> {
+        self.table.delete(rep)?;
+        Ok(())
+    }
+}

@@ -2,7 +2,16 @@ package ohim:dom;
 
 interface node {
     resource node {
-        constructor();
         append-child: func(child: node) -> node;
+    }
+
+    resource document {
+        constructor();
+        url: func() -> string;
+        document-element: func() -> option<element>;
+    }
+
+    resource element {
+        has-attributes: func() -> bool;
     }
 }

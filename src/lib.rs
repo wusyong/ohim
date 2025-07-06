@@ -7,18 +7,18 @@
     unreachable_pub
 )]
 
+use std::fmt::Debug;
+
+pub use bindings::{Imports, ohim};
 pub use document::*;
 pub use element::*;
 pub use event::*;
 pub use event_target::*;
 pub use node::*;
 pub use object::*;
-// use ohim::dom::event::Host;
-// use wasmtime::{
-//     Store,
-//     component::{ResourceTable, bindgen},
-// };
-// use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
+use ohim::dom::node::Host;
+use wasmtime::{Store, component::ResourceTable};
+use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 mod document;
 mod element;
@@ -27,42 +27,56 @@ mod event_target;
 mod node;
 mod object;
 
-// bindgen!({
-//     path: "wit",
-//     with: {
-//         "ohim:dom/event/event": Event,
-//         "ohim:dom/event-target/event-target": EventTarget,
-//         "ohim:dom/node/node": Node,
-//     }
-// });
-//
-// /// `Store` states to use when `[Exposed=Window]`
-// pub struct WindowStates {
-//     table: ResourceTable,
-//     ctx: WasiCtx,
-//     store: Store<()>,
-// }
-//
-// impl WindowStates {
-//     pub fn create() -> Self {
-//         Self {
-//             table: ResourceTable::new(),
-//             ctx: WasiCtx::builder().build(),
-//             store: Store::<()>::default(),
-//         }
-//     }
-// }
-//
-// impl Host for WindowStates {}
-//
-// impl IoView for WindowStates {
-//     fn table(&mut self) -> &mut ResourceTable {
-//         &mut self.table
-//     }
-// }
-//
-// impl WasiView for WindowStates {
-//     fn ctx(&mut self) -> &mut WasiCtx {
-//         &mut self.ctx
-//     }
-// }
+#[allow(missing_debug_implementations, missing_docs, unreachable_pub)]
+mod bindings {
+    pub use super::*;
+    wasmtime::component::bindgen!({
+        path: "wit",
+        with: {
+            "ohim:dom/node/node": Node,
+            "ohim:dom/node/document": Document,
+            "ohim:dom/node/element": Element,
+        }
+    });
+}
+
+/// `Store` states to use when `[Exposed=Window]`
+pub struct WindowStates {
+    table: ResourceTable,
+    ctx: WasiCtx,
+    store: Store<()>,
+}
+
+impl WindowStates {
+    /// Create `WindowStates` data for initializing a new `Store`.
+    pub fn create() -> Self {
+        Self {
+            table: ResourceTable::new(),
+            ctx: WasiCtx::builder().build(),
+            store: Store::<()>::default(),
+        }
+    }
+}
+
+impl Debug for WindowStates {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WindowStates")
+            .field("table", &self.table)
+            .field("store", &self.store)
+            .finish()
+    }
+}
+
+impl Host for WindowStates {}
+
+impl IoView for WindowStates {
+    fn table(&mut self) -> &mut ResourceTable {
+        &mut self.table
+    }
+}
+
+impl WasiView for WindowStates {
+    fn ctx(&mut self) -> &mut WasiCtx {
+        &mut self.ctx
+    }
+}
