@@ -76,6 +76,11 @@ pub struct NodeImpl {
 impl NodeImpl {
     /// Create an empty `NodeImpl`.
     pub fn new() -> Self {
+        NodeImpl::new_with_type(NodeTypeData::None)
+    }
+
+    /// Create an `NodeImpl` with provided node type data.
+    pub fn new_with_type(data: NodeTypeData) -> Self {
         NodeImpl {
             event_target: EventTarget::new(),
             parent_node: None,
@@ -83,7 +88,7 @@ impl NodeImpl {
             last_child: None,
             previous_sibling: None,
             next_sibling: None,
-            data: NodeTypeData::None,
+            data,
         }
     }
 }
@@ -101,12 +106,16 @@ pub enum NodeTypeData {
 }
 
 impl HostNode for WindowStates {
-    fn append_child(&mut self, self_: Resource<Node>, child: Resource<Node>) -> Resource<Node> {
+    fn append_child(
+        &mut self,
+        self_: Resource<Node>,
+        child: Resource<Node>,
+    ) -> Result<Resource<Node>> {
         // TODO: properly handle error for all host traits
-        let self_ = self.table.get(&self_).unwrap();
-        let child_ = self.table.get(&child).unwrap();
+        let self_ = self.table.get(&self_)?;
+        let child_ = self.table.get(&child)?;
         self_.append(&child_, &mut self.store);
-        child
+        Ok(child)
     }
 
     fn drop(&mut self, rep: Resource<Node>) -> Result<()> {

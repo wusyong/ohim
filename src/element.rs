@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use wasmtime::{AsContext, ExternRef, Result, Rooted, component::Resource};
+use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
 use crate::{NodeImpl, NodeTypeData, WindowStates, object::Object, ohim::dom::node::HostElement};
 
@@ -10,6 +10,14 @@ pub struct Element(Object<NodeImpl>);
 
 // TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Element {
+    /// Create a `Element` object.
+    pub fn new(store: impl AsContextMut) -> Result<Self> {
+        Ok(Element(Object::new(
+            store,
+            NodeImpl::new_with_type(NodeTypeData::Element(ElementImpl::new())),
+        )?))
+    }
+
     /// <https://dom.spec.whatwg.org/#dom-element-hasattributes>
     pub fn has_attributes(&self, store: impl AsContext) -> bool {
         !self.data(&store).as_element().attribute_list.is_empty()
@@ -63,9 +71,9 @@ impl ElementImpl {
 }
 
 impl HostElement for WindowStates {
-    fn has_attributes(&mut self, self_: Resource<Element>) -> bool {
-        let self_ = self.table.get(&self_).unwrap();
-        self_.has_attributes(&self.store)
+    fn has_attributes(&mut self, self_: Resource<Element>) -> Result<bool> {
+        let self_ = self.table.get(&self_)?;
+        Ok(self_.has_attributes(&self.store))
     }
 
     fn drop(&mut self, rep: Resource<Element>) -> Result<()> {

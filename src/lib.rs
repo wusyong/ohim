@@ -36,7 +36,8 @@ mod bindings {
             "ohim:dom/node/node": Node,
             "ohim:dom/node/document": Document,
             "ohim:dom/node/element": Element,
-        }
+        },
+        trappable_imports: true,
     });
 }
 

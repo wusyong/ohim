@@ -1,4 +1,4 @@
-use ohim::dom::event::Event;
+use ohim::dom::node::Document;
 
 // cargo component build
 wit_bindgen::generate!({
@@ -13,12 +13,12 @@ export!(GuestComponent);
 impl Guest for GuestComponent {
     #[allow(async_fn_in_trait)]
     fn test() -> String {
-        let x = Event::new("hello");
-        x.get_type()
-    }
-
-    #[allow(async_fn_in_trait)]
-    fn call_callback(name: String, args: Vec<String>) -> String {
-        todo!()
+        let document = Document::new();
+        let element = document.document_element();
+        format!(
+            "Document has url: {} with element has attributes: {}",
+            document.url(),
+            element.unwrap().has_attributes()
+        )
     }
 }

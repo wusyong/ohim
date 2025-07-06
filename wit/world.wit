@@ -8,7 +8,7 @@ world imports {
 
     // FIXME: Workaround of callback until scoped callback is supported:
     // https://github.com/WebAssembly/component-model/issues/412
-    import register-callback: func(name: string);
-    import unregister-callback: func(name: string);
-    export call-callback: func(name: string, args: list<string>) -> string;
+    // import register-callback: func(name: string);
+    // import unregister-callback: func(name: string);
+    // export call-callback: func(name: string, args: list<string>) -> string;
 }

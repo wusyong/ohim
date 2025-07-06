@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use wasmtime::{AsContext, ExternRef, Result, Rooted, component::Resource};
+use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
 use crate::{
     Element, NodeImpl, NodeTypeData, WindowStates, object::Object, ohim::dom::node::HostDocument,
@@ -10,8 +10,15 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct Document(Object<NodeImpl>);
 
-// TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Document {
+    /// Create a `Document` object.
+    pub fn new(store: impl AsContextMut) -> Result<Self> {
+        Ok(Document(Object::new(
+            store,
+            NodeImpl::new_with_type(NodeTypeData::Document(DocumentImpl::new())),
+        )?))
+    }
+
     /// <https://dom.spec.whatwg.org/#dom-document-url>
     pub fn url(&self, store: impl AsContext) -> String {
         // TODO: implement real one
@@ -67,18 +74,24 @@ impl DocumentImpl {
     /// Create an empty `DocumentImpl`.
     pub fn new() -> Self {
         DocumentImpl {
-            url: String::new(),
+            // FIXME: This is only for demo purpose
+            url: String::from("https://example.com"),
             document_element: None,
         }
     }
 }
 
 impl HostDocument for WindowStates {
-    fn new(&mut self) -> Resource<Document> {
-        todo!()
-        //     self.table
-        //         .push(Node::new(&mut self.store).unwrap())
-        //         .unwrap()
+    fn new(&mut self) -> Result<Resource<Document>> {
+        // FIXME: This is only for demo purpose
+        let element = Element::new(&mut self.store)?;
+        let document = Document::new(&mut self.store)?;
+        document
+            .data_mut(&mut self.store)
+            .as_document_mut()
+            .document_element = Some(element);
+
+        Ok(self.table.push(document)?)
     }
 
     fn drop(&mut self, rep: Resource<Document>) -> Result<()> {
@@ -86,15 +99,16 @@ impl HostDocument for WindowStates {
         Ok(())
     }
 
-    fn url(&mut self, self_: Resource<Document>) -> String {
-        let self_ = self.table.get(&self_).unwrap();
-        self_.url(&self.store)
+    fn url(&mut self, self_: Resource<Document>) -> Result<String> {
+        let self_ = self.table.get(&self_)?;
+        Ok(self_.url(&self.store))
     }
 
-    fn document_element(&mut self, self_: Resource<Document>) -> Option<Resource<Element>> {
-        let self_ = self.table.get(&self_).unwrap();
-        self_
-            .document_element(&self.store)
-            .map(|element| self.table.push(element).unwrap())
+    fn document_element(&mut self, self_: Resource<Document>) -> Result<Option<Resource<Element>>> {
+        let self_ = self.table.get(&self_)?;
+        match self_.document_element(&self.store) {
+            Some(e) => Ok(Some(self.table.push(e)?)),
+            None => Ok(None),
+        }
     }
 }
