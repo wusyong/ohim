@@ -17,7 +17,6 @@ members = [
 
 [workspace.dependencies]
 anyhow = { version = "1.0.93", default-features = false }
-# wasmtime = { version = "34.0", default-features = false, features = ["runtime", "cranelift", "gc", "component-model", "gc-drc"] }
 wasmtime = "34.0"
 wasmtime-wasi = "34.0"
 wit-component = "0.235.0"

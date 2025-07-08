@@ -1,0 +1,14 @@
+# Ohim - A WebAssembly-based script engine
+
+## :warning: Current porject is still Work In Progress
+
+Ohim is currently a proof of concept, but aim to evolve into full script engine that follows [DOM Standard](https://dom.spec.whatwg.org/).
+See this [blog post](https://wusyong.github.io/posts/wasmtime-script-engine/) to learn what we intend and how to
+achieve. We will collect feedback and start with minimum viable `Node` tree soon.
+
+## Demo
+
+```
+cargo component build -p test
+cargo run
+```
