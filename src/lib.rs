@@ -17,6 +17,7 @@ use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 pub mod dom;
 pub mod navigible;
+pub mod string;
 pub mod url;
 
 #[allow(missing_debug_implementations, missing_docs, unreachable_pub)]
