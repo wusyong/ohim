@@ -16,6 +16,8 @@ use wasmtime::{Store, component::ResourceTable};
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
 pub mod dom;
+pub mod navigible;
+pub mod url;
 
 #[allow(missing_debug_implementations, missing_docs, unreachable_pub)]
 mod bindings {

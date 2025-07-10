@@ -5,19 +5,28 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+malloc_size_of = { workspace = true }
+malloc_size_of_derive = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wit-component = { workspace = true }
 
 [workspace]
 resolver = '2'
-members = [
-  "wasm",
-]
+members = ["wasm"]
 
 [workspace.dependencies]
-anyhow = { version = "1.0.93", default-features = false }
+# Wasmtime crates
 wasmtime = "34.0"
 wasmtime-wasi = "34.0"
 wit-component = "0.235.0"
 wit-bindgen = { version = "0.43.0", default-features = false }
+# Servo crates
+malloc_size_of = { package = "servo_malloc_size_of", git = "https://github.com/servo/servo" }
+malloc_size_of_derive = "0.1"
+# Others
+anyhow = { version = "1.0.93", default-features = false }
+url = "2.5"
+uuid = { version = "1.12.1", features = ["v4"] }
