@@ -25,7 +25,7 @@ impl Element {
 
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
-        &***self
+        self
     }
 }
 

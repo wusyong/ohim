@@ -10,22 +10,12 @@
 use std::fmt::Debug;
 
 pub use bindings::{Imports, ohim};
-pub use document::*;
-pub use element::*;
-pub use event::*;
-pub use event_target::*;
-pub use node::*;
-pub use object::*;
+pub use dom::*;
 use ohim::dom::node::Host;
 use wasmtime::{Store, component::ResourceTable};
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
-mod document;
-mod element;
-mod event;
-mod event_target;
-mod node;
-mod object;
+pub mod dom;
 
 #[allow(missing_debug_implementations, missing_docs, unreachable_pub)]
 mod bindings {
