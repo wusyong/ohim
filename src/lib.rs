@@ -15,6 +15,7 @@ use ohim::dom::node::Host;
 use wasmtime::{Store, component::ResourceTable};
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
+pub mod browsing_context;
 pub mod dom;
 pub mod navigible;
 pub mod string;
