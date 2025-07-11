@@ -50,9 +50,18 @@ impl Document {
         )?))
     }
 
+    /// <https://dom.spec.whatwg.org/#concept-document-origin>
+    pub fn origin(&self, store: impl AsContext) -> ImmutableOrigin {
+        self.data(&store).as_document().origin.clone()
+    }
+
+    /// <https://html.spec.whatwg.org/multipage/#concept-document-about-base-url>
+    pub fn about_base_url(&self, store: impl AsContext) -> Option<DOMUrl> {
+        self.data(&store).as_document().about_base_url.clone()
+    }
+
     /// <https://dom.spec.whatwg.org/#dom-document-url>
-    pub fn url(&self, store: impl AsContext) -> String {
-        // TODO: implement real one
+    pub fn url(&self, store: impl AsContext) -> DOMUrl {
         self.data(&store).as_document().url.clone()
     }
 
@@ -116,12 +125,13 @@ pub struct DocumentImpl {
     /// <https://html.spec.whatwg.org/multipage/dom.html#is-initial-about:blank>
     is_blank: bool,
     /// <https://html.spec.whatwg.org/multipage/#concept-document-about-base-url>
-    base_url: Option<DOMUrl>,
+    about_base_url: Option<DOMUrl>,
     /// <https://dom.spec.whatwg.org/#document-allow-declarative-shadow-roots>
     allow_shadow: bool,
     /// <https://dom.spec.whatwg.org/#document-custom-element-registry>
     custom_element: Option<bool>,
-    url: String,
+    /// <https://dom.spec.whatwg.org/#concept-document-url>
+    url: DOMUrl,
     document_element: Option<Element>,
 }
 
@@ -151,11 +161,10 @@ impl DocumentImpl {
             flags,
             time_info,
             is_blank,
-            base_url,
+            about_base_url: base_url,
             allow_shadow,
             custom_element: None,
-            // FIXME: This is only for demo purpose
-            url: String::from("https://example.com"),
+            url: DOMUrl::parse("about:blank").unwrap(),
             document_element: None,
         }
     }
@@ -182,7 +191,7 @@ impl HostDocument for WindowStates {
 
     fn url(&mut self, self_: Resource<Document>) -> Result<String> {
         let self_ = self.table.get(&self_)?;
-        Ok(self_.url(&self.store))
+        Ok(self_.url(&self.store).to_string())
     }
 
     fn document_element(&mut self, self_: Resource<Document>) -> Result<Option<Resource<Element>>> {
@@ -194,10 +203,14 @@ impl HostDocument for WindowStates {
     }
 }
 
+/// <https://dom.spec.whatwg.org/#concept-document-mode>
 #[derive(Debug, Default)]
 pub enum DocumentMode {
+    /// "no-quirks"
     #[default]
     NoQuirks,
+    /// "quirks"
     Quirks,
+    /// "limited-quirks"
     LimitedQuirks,
 }

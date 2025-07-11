@@ -25,13 +25,16 @@ use crate::{
 #[derive(Debug)]
 pub struct BrowsingContext {
     id: BrowsingContextID,
+    group: Option<BrowsingContextGroupID>,
 }
 
 impl BrowsingContext {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-top-level-browsing-context>
-    pub fn new_top_browsing_context() -> (Self, Document) {
+    pub fn new_top_browsing_context(
+        store: impl AsContextMut,
+    ) -> (BrowsingContextGroup, Self, Document) {
         // 1. Let group and document be the result of creating a new browsing context group and document.
-        todo!()
+        BrowsingContextGroup::new_browsing_context_group_and_document(store)
     }
 
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context>
@@ -45,6 +48,7 @@ impl BrowsingContext {
         // 1. Let browsingContext be a new browsing context.
         let context = BrowsingContext {
             id: BrowsingContextID::default(),
+            group: None,
         };
         // 2. Let unsafeContextCreationTime be the unsafe shared current time.
         let time = Instant::now();
@@ -89,11 +93,13 @@ impl BrowsingContext {
             true,
             // TODO: Define CustomElementRegistry
             store,
-        );
+        )
+        .expect("Failed to create document");
         // 16. TODO: If creator is non-null, then:
         // 17 TODO: Assert: document's URL and document's relevant settings object's creation URL are about:blank.
         // 18. TODO: Mark document as ready for post-load tasks.
-        todo!()
+        // TODO: 19~21
+        (context, document)
     }
 
     /// <https://html.spec.whatwg.org/multipage/browsers.html#determining-the-creation-sandboxing-flags>
@@ -108,30 +114,11 @@ impl BrowsingContext {
     }
 }
 
-/// ID of `BrowsingContext`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BrowsingContextID(pub usize);
-
-impl Default for BrowsingContextID {
-    fn default() -> Self {
-        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
-        let id = Self(COUNT.load(Ordering::Relaxed));
-        COUNT.fetch_add(1, Ordering::Relaxed);
-        id
-    }
-}
-
-impl Deref for BrowsingContextID {
-    type Target = usize;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 /// <https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context-group>
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BrowsingContextGroup {
+    id: BrowsingContextGroupID,
+    browsing_context: HashSet<BrowsingContextID>,
     agent_cluster: HashMap<ImmutableOrigin, AgentCluster>,
     historical_agent_cluster: HashMap<ImmutableOrigin, ImmutableOrigin>,
     isolation_mode: IsolationMode,
@@ -139,12 +126,22 @@ pub struct BrowsingContextGroup {
 
 impl BrowsingContextGroup {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context-group-and-document>
-    pub fn new_browsing_context_group_and_document() -> (Self, Document) {
+    pub fn new_browsing_context_group_and_document(
+        store: impl AsContextMut,
+    ) -> (Self, BrowsingContext, Document) {
         // 1. Let group be a new browsing context group.
+        let mut group = BrowsingContextGroup::default();
         // 2. Append group to the user agent's browsing context group set.
+        // This is done by returning Self.
         // 3. Let browsingContext and document be the result of creating a new browsing context and document with null,
         // null, and group.
-        todo!()
+        let (mut context, document) =
+            BrowsingContext::new_browsing_context(None, None, &mut group, store);
+        // 4. Append browsingContext to group.
+        group.browsing_context.insert(context.id());
+        context.group = Some(group.id());
+        // 5. Return group and document.
+        (group, context, document)
     }
 
     /// <https://html.spec.whatwg.org/multipage/#obtain-similar-origin-window-agent>
@@ -186,6 +183,53 @@ impl BrowsingContextGroup {
         }
         // 7. Return the single similar-origin window agent contained in group's agent cluster map[key].
         &self.agent_cluster.get(key).unwrap().agent
+    }
+
+    /// Get the ID of the `BrowsingContextGroup`.
+    pub fn id(&self) -> BrowsingContextGroupID {
+        self.id
+    }
+}
+
+/// ID of `BrowsingContext`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BrowsingContextID(pub usize);
+
+impl Default for BrowsingContextID {
+    fn default() -> Self {
+        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+        let id = Self(COUNT.load(Ordering::Relaxed));
+        COUNT.fetch_add(1, Ordering::Relaxed);
+        id
+    }
+}
+
+impl Deref for BrowsingContextID {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// ID of `BrowsingContext`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BrowsingContextGroupID(pub usize);
+
+impl Default for BrowsingContextGroupID {
+    fn default() -> Self {
+        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+        let id = Self(COUNT.load(Ordering::Relaxed));
+        COUNT.fetch_add(1, Ordering::Relaxed);
+        id
+    }
+}
+
+impl Deref for BrowsingContextGroupID {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
