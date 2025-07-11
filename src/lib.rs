@@ -20,6 +20,7 @@ pub mod dom;
 pub mod navigible;
 pub mod string;
 pub mod url;
+pub mod user_agent;
 
 #[allow(missing_debug_implementations, missing_docs, unreachable_pub)]
 mod bindings {

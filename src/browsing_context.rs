@@ -1,12 +1,17 @@
 //! A browsing context is a programmatic representation of a series of documents, multiple of which can live within a single navigable.
 
-use std::{collections::HashSet, time::Instant};
+use std::{
+    collections::{HashMap, HashSet},
+    time::Instant,
+    u16,
+};
 
 use url::Url;
 
 use crate::{
     Document,
     url::{DOMUrl, ImmutableOrigin},
+    user_agent::{Agent, AgentCluster},
 };
 
 /// <https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context>
@@ -25,7 +30,7 @@ impl BrowsingContext {
     pub fn create_new_browsing_context(
         creator: Option<Document>,
         embedder: Option<bool>,
-        group: &BrowsingContextGroup,
+        group: &mut BrowsingContextGroup,
     ) -> (Self, Document) {
         // 1. Let browsingContext be a new browsing context.
         let context = BrowsingContext {};
@@ -48,6 +53,8 @@ impl BrowsingContext {
         );
         // 8. TODO: Let permissionsPolicy be the result of creating a permissions policy given embedder and origin.
         let policy = false;
+        // 9. Let agent be the result of obtaining a similar-origin window agent given origin, group, and false.
+        let agent = group.window_agent(origin, false);
         todo!()
     }
 
@@ -59,8 +66,12 @@ impl BrowsingContext {
 }
 
 /// <https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context-group>
-#[derive(Debug, Eq, Hash, PartialEq)]
-pub struct BrowsingContextGroup {}
+#[derive(Debug)]
+pub struct BrowsingContextGroup {
+    agent_cluster: HashMap<ImmutableOrigin, AgentCluster>,
+    historical_agent_cluster: HashMap<ImmutableOrigin, ImmutableOrigin>,
+    isolation_mode: IsolationMode,
+}
 
 impl BrowsingContextGroup {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context-group-and-document>
@@ -71,9 +82,62 @@ impl BrowsingContextGroup {
         // null, and group.
         todo!()
     }
+
+    /// <https://html.spec.whatwg.org/multipage/#obtain-similar-origin-window-agent>
+    pub fn window_agent(&mut self, origin: ImmutableOrigin, oac: bool) -> &Agent {
+        // 3. If group's cross-origin isolation mode is not "none", then set key to origin.
+        let key = if self.isolation_mode == IsolationMode::None {
+            &origin
+            // 4. Otherwise, if group's historical agent cluster key map[origin] exists,
+            // then set key to group's historical agent cluster key map[origin].
+        } else if let Some(k) = self.historical_agent_cluster.get(&origin) {
+            k
+        } else {
+            // 5.1 If requestsOAC is true, then set key to origin.
+            let k = if oac {
+                origin.clone()
+            } else {
+                // 1. Let site be the result of obtaining a site with origin.
+                // 2. Let key be site.
+                obtain_site(&origin)
+            };
+            // 5.2 Set group's historical agent cluster key map[origin] to key.
+            self.historical_agent_cluster.insert(origin.clone(), k);
+            self.historical_agent_cluster.get(&origin).unwrap()
+        };
+
+        // 6. If group's agent cluster map[key] does not exist, then:
+        if !self.agent_cluster.contains_key(key) {
+            // 6.1. Let agentCluster be a new agent cluster.
+            let agent_cluster = AgentCluster {
+                // 6.2. Set agentCluster's cross-origin isolation mode to group's cross-origin isolation mode.
+                isolation_mode: self.isolation_mode,
+                // 6.3. If key is an origin: Set agentCluster's is origin-keyed to true.
+                origin_keyed: key == &origin,
+                ..Default::default()
+            };
+            // 6.4. TODO: Add the result of creating an agent, given false, to agentCluster.
+            // 6.5. Set group's agent cluster map[key] to agentCluster.
+            self.agent_cluster.insert(key.clone(), agent_cluster);
+        }
+        // 7. Return the single similar-origin window agent contained in group's agent cluster map[key].
+        &self.agent_cluster.get(key).unwrap().agent
+    }
 }
 
-/// <https://html.spec.whatwg.org/multipage/document-sequences.html#determining-the-origin>
+/// <https://html.spec.whatwg.org/multipage/document-sequences.html#cross-origin-isolation-mode>
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum IsolationMode {
+    /// none
+    #[default]
+    None,
+    /// logical
+    Logical,
+    /// concrete
+    Concrete,
+}
+
+/// <https://html.spec.whatwg.org/multipage/#determining-the-origin>
 pub fn determin_origin(
     url: Option<&DOMUrl>,
     flags: bool,
@@ -99,5 +163,19 @@ pub fn determin_origin(
         }
         // 5. Return url's origin.
         (Some(u), None) => u.origin(),
+    }
+}
+
+/// <https://html.spec.whatwg.org/multipage/#obtain-a-site>
+pub fn obtain_site(origin: &ImmutableOrigin) -> ImmutableOrigin {
+    // 1. If origin is an opaque origin, then return origin.
+    match origin {
+        ImmutableOrigin::Opaque(_) => origin.clone(),
+        ImmutableOrigin::Tuple(scheme, host, _) => {
+            // 2. If origin's host's registrable domain is null, then return (origin's scheme, origin's host).
+            // 3. Return (origin's scheme, origin's host's registrable domain).
+            // TODO: implement registrable_domain (This requires a list of public domain)
+            ImmutableOrigin::Tuple(scheme.clone(), host.clone(), u16::MAX)
+        }
     }
 }
