@@ -25,7 +25,7 @@ impl Navigable {
         let document = match opener {
             // 2. If opener is null, then set document to the second return value of creating a new top-level browsing
             // context and document.
-            None => BrowsingContext::create_top_browsing_context().1,
+            None => BrowsingContext::new_top_browsing_context().1,
             // 3. Otherwise, set document to the second return value of creating a new auxiliary browsing context and
             // document given opener.
             Some(_) => {

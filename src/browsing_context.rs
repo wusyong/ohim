@@ -2,38 +2,50 @@
 
 use std::{
     collections::{HashMap, HashSet},
+    ops::Deref,
+    sync::{
+        LazyLock,
+        atomic::{AtomicUsize, Ordering},
+    },
     time::Instant,
     u16,
 };
 
+use headers::ContentType;
 use url::Url;
+use wasmtime::AsContextMut;
 
 use crate::{
-    Document,
+    Document, DocumentMode,
     url::{DOMUrl, ImmutableOrigin},
     user_agent::{Agent, AgentCluster},
 };
 
 /// <https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context>
 #[derive(Debug)]
-pub struct BrowsingContext {}
+pub struct BrowsingContext {
+    id: BrowsingContextID,
+}
 
 impl BrowsingContext {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-top-level-browsing-context>
-    pub fn create_top_browsing_context() -> (Self, Document) {
+    pub fn new_top_browsing_context() -> (Self, Document) {
         // 1. Let group and document be the result of creating a new browsing context group and document.
         todo!()
     }
 
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context>
     /// TODO: implement embedder
-    pub fn create_new_browsing_context(
+    pub fn new_browsing_context(
         creator: Option<Document>,
         embedder: Option<bool>,
         group: &mut BrowsingContextGroup,
+        store: impl AsContextMut,
     ) -> (Self, Document) {
         // 1. Let browsingContext be a new browsing context.
-        let context = BrowsingContext {};
+        let context = BrowsingContext {
+            id: BrowsingContextID::default(),
+        };
         // 2. Let unsafeContextCreationTime be the unsafe shared current time.
         let time = Instant::now();
         // 3. Let creatorOrigin be null.
@@ -54,7 +66,33 @@ impl BrowsingContext {
         // 8. TODO: Let permissionsPolicy be the result of creating a permissions policy given embedder and origin.
         let policy = false;
         // 9. Let agent be the result of obtaining a similar-origin window agent given origin, group, and false.
-        let agent = group.window_agent(origin, false);
+        let agent = group.window_agent(&origin, false);
+        // TODO: step 10 ~13
+
+        // 14. Let loadTimingInfo be a new document load timing info with its navigation start time set to the result
+        // of calling coarsen time with unsafeContextCreationTime and the new environment settings object's
+        // cross-origin isolated capability.
+        // TODO: implement load time info
+        let load_time_info = false;
+        // 15. Let document be a new Document
+        let document = Document::new(
+            true,
+            ContentType::html(),
+            DocumentMode::Quirks,
+            origin,
+            context.id(),
+            policy,
+            flags,
+            load_time_info,
+            true,
+            creator_url,
+            true,
+            // TODO: Define CustomElementRegistry
+            store,
+        );
+        // 16. TODO: If creator is non-null, then:
+        // 17 TODO: Assert: document's URL and document's relevant settings object's creation URL are about:blank.
+        // 18. TODO: Mark document as ready for post-load tasks.
         todo!()
     }
 
@@ -62,6 +100,32 @@ impl BrowsingContext {
     /// TODO: Implement sandbox flags
     pub fn determine_creation_sandbox_flags(&self, embedder: &Option<bool>) -> bool {
         false
+    }
+
+    /// Get the ID of the BrowsingContext.
+    pub fn id(&self) -> BrowsingContextID {
+        self.id
+    }
+}
+
+/// ID of `BrowsingContext`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BrowsingContextID(pub usize);
+
+impl Default for BrowsingContextID {
+    fn default() -> Self {
+        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+        let id = Self(COUNT.load(Ordering::Relaxed));
+        COUNT.fetch_add(1, Ordering::Relaxed);
+        id
+    }
+}
+
+impl Deref for BrowsingContextID {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -75,7 +139,7 @@ pub struct BrowsingContextGroup {
 
 impl BrowsingContextGroup {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context-group-and-document>
-    pub fn create_browsing_context_group_and_document() -> (Self, Document) {
+    pub fn new_browsing_context_group_and_document() -> (Self, Document) {
         // 1. Let group be a new browsing context group.
         // 2. Append group to the user agent's browsing context group set.
         // 3. Let browsingContext and document be the result of creating a new browsing context and document with null,
@@ -84,13 +148,13 @@ impl BrowsingContextGroup {
     }
 
     /// <https://html.spec.whatwg.org/multipage/#obtain-similar-origin-window-agent>
-    pub fn window_agent(&mut self, origin: ImmutableOrigin, oac: bool) -> &Agent {
+    pub fn window_agent(&mut self, origin: &ImmutableOrigin, oac: bool) -> &Agent {
         // 3. If group's cross-origin isolation mode is not "none", then set key to origin.
         let key = if self.isolation_mode == IsolationMode::None {
-            &origin
+            origin
             // 4. Otherwise, if group's historical agent cluster key map[origin] exists,
             // then set key to group's historical agent cluster key map[origin].
-        } else if let Some(k) = self.historical_agent_cluster.get(&origin) {
+        } else if let Some(k) = self.historical_agent_cluster.get(origin) {
             k
         } else {
             // 5.1 If requestsOAC is true, then set key to origin.
@@ -99,11 +163,11 @@ impl BrowsingContextGroup {
             } else {
                 // 1. Let site be the result of obtaining a site with origin.
                 // 2. Let key be site.
-                obtain_site(&origin)
+                obtain_site(origin)
             };
             // 5.2 Set group's historical agent cluster key map[origin] to key.
             self.historical_agent_cluster.insert(origin.clone(), k);
-            self.historical_agent_cluster.get(&origin).unwrap()
+            self.historical_agent_cluster.get(origin).unwrap()
         };
 
         // 6. If group's agent cluster map[key] does not exist, then:
@@ -113,7 +177,7 @@ impl BrowsingContextGroup {
                 // 6.2. Set agentCluster's cross-origin isolation mode to group's cross-origin isolation mode.
                 isolation_mode: self.isolation_mode,
                 // 6.3. If key is an origin: Set agentCluster's is origin-keyed to true.
-                origin_keyed: key == &origin,
+                origin_keyed: key == origin,
                 ..Default::default()
             };
             // 6.4. TODO: Add the result of creating an agent, given false, to agentCluster.

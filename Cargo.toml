@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+headers = { workspace = true }
 malloc_size_of = { workspace = true }
 malloc_size_of_derive = { workspace = true }
 regex = { workspace = true }
@@ -29,6 +30,7 @@ malloc_size_of = { package = "servo_malloc_size_of", git = "https://github.com/s
 malloc_size_of_derive = "0.1"
 # Others
 anyhow = { version = "1.0.93", default-features = false }
+headers = "0.4"
 regex = "1.11"
 url = "2.5"
 uuid = { version = "1.12.1", features = ["v4"] }
