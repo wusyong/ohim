@@ -17,7 +17,7 @@ use wasmtime::AsContextMut;
 
 use crate::{
     Document, DocumentMode,
-    agent::{Agent, AgentCluster},
+    agent::{Agent, AgentCluster, AgentID, Realm},
     url::{DOMUrl, ImmutableOrigin},
 };
 
@@ -81,7 +81,11 @@ impl BrowsingContext {
         let policy = false;
         // 9. Let agent be the result of obtaining a similar-origin window agent given origin, group, and false.
         let agent = group.window_agent(&origin, false);
-        // TODO: step 10 ~13
+        // 10. Let realm execution context be the result of creating a new realm given agent and the following customizations:
+        let realm = Realm::create(agent, None, None);
+        // TODO: For the global object, create a new Window object.
+        // TODO: For the global this binding, use browsingContext's WindowProxy object.
+        // TODO: step 11 ~13
 
         // 14. Let loadTimingInfo be a new document load timing info with its navigation start time set to the result
         // of calling coarsen time with unsafeContextCreationTime and the new environment settings object's
@@ -166,7 +170,7 @@ impl BrowsingContextGroup {
     }
 
     /// <https://html.spec.whatwg.org/multipage/#obtain-similar-origin-window-agent>
-    pub fn window_agent(&mut self, origin: &ImmutableOrigin, oac: bool) -> &Agent {
+    pub fn window_agent(&mut self, origin: &ImmutableOrigin, oac: bool) -> AgentID {
         // 3. If group's cross-origin isolation mode is not "none", then set key to origin.
         let key = if self.isolation_mode == IsolationMode::None {
             origin
@@ -196,14 +200,14 @@ impl BrowsingContextGroup {
                 isolation_mode: self.isolation_mode,
                 // 6.3. If key is an origin: Set agentCluster's is origin-keyed to true.
                 origin_keyed: key == origin,
-                ..Default::default()
+                // 6.4. Add the result of creating an agent, given false, to agentCluster.
+                agent: Agent::create(false),
             };
-            // 6.4. TODO: Add the result of creating an agent, given false, to agentCluster.
             // 6.5. Set group's agent cluster map[key] to agentCluster.
             self.agent_cluster.insert(key.clone(), agent_cluster);
         }
         // 7. Return the single similar-origin window agent contained in group's agent cluster map[key].
-        &self.agent_cluster.get(key).unwrap().agent
+        self.agent_cluster.get(key).unwrap().agent
     }
 
     /// Get the ID of the `BrowsingContextGroup`.
