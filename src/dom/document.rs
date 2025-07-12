@@ -5,7 +5,7 @@ use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Re
 
 use crate::{
     Element, NodeImpl, NodeTypeData, WindowStates,
-    browsing_context::BrowsingContextID,
+    browsing_context::{BrowsingContextID, SandboxingFlag},
     object::Object,
     ohim::dom::node::HostDocument,
     url::{DOMUrl, ImmutableOrigin},
@@ -25,7 +25,7 @@ impl Document {
         origin: ImmutableOrigin,
         browsing_context: BrowsingContextID,
         policy: bool,
-        flags: bool,
+        flags: SandboxingFlag,
         time_info: bool,
         is_blank: bool,
         base_url: Option<DOMUrl>,
@@ -119,7 +119,7 @@ pub struct DocumentImpl {
     /// <https://html.spec.whatwg.org/multipage/#concept-document-permissions-policy>
     policy: bool,
     /// <https://html.spec.whatwg.org/multipage/browsers.html#active-sandboxing-flag-set>
-    flags: bool,
+    flags: SandboxingFlag,
     /// <https://html.spec.whatwg.org/multipage/dom.html#load-timing-info>
     time_info: bool,
     /// <https://html.spec.whatwg.org/multipage/dom.html#is-initial-about:blank>
@@ -145,7 +145,7 @@ impl DocumentImpl {
         origin: ImmutableOrigin,
         browsing_context: BrowsingContextID,
         policy: bool,
-        flags: bool,
+        flags: SandboxingFlag,
         time_info: bool,
         is_blank: bool,
         base_url: Option<DOMUrl>,

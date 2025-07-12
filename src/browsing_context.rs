@@ -11,6 +11,7 @@ use std::{
     u16,
 };
 
+use bitflags::{Flags, bitflags};
 use headers::ContentType;
 use url::Url;
 use wasmtime::AsContextMut;
@@ -26,6 +27,8 @@ use crate::{
 pub struct BrowsingContext {
     id: BrowsingContextID,
     group: Option<BrowsingContextGroupID>,
+    /// <https://html.spec.whatwg.org/multipage/#popup-sandboxing-flag-set>
+    popup_flag: SandboxingFlag,
 }
 
 impl BrowsingContext {
@@ -49,6 +52,7 @@ impl BrowsingContext {
         let context = BrowsingContext {
             id: BrowsingContextID::default(),
             group: None,
+            popup_flag: SandboxingFlag::empty(),
         };
         // 2. Let unsafeContextCreationTime be the unsafe shared current time.
         let time = Instant::now();
@@ -103,9 +107,14 @@ impl BrowsingContext {
     }
 
     /// <https://html.spec.whatwg.org/multipage/browsers.html#determining-the-creation-sandboxing-flags>
-    /// TODO: Implement sandbox flags
-    pub fn determine_creation_sandbox_flags(&self, embedder: &Option<bool>) -> bool {
-        false
+    pub fn determine_creation_sandbox_flags(&self, embedder: &Option<bool>) -> SandboxingFlag {
+        match embedder {
+            // If embedder is null, then: the flags set on browsing context's popup sandboxing flag set.
+            None => self.popup_flag,
+            // TODO: If embedder is an element, then: the flags set on embedder's iframe sandboxing flag set.
+            // If embedder is an element, then: the flags set on embedder's node document's active sandboxing flag set.
+            Some(_) => SandboxingFlag::empty(),
+        }
     }
 
     /// Get the ID of the BrowsingContext.
@@ -245,14 +254,54 @@ pub enum IsolationMode {
     Concrete,
 }
 
+bitflags! {
+    /// <https://html.spec.whatwg.org/multipage/#sandboxing-flag-set>
+    #[derive(Clone, Copy, Debug)]
+    pub(crate) struct SandboxingFlag: u32 {
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-navigation-browsing-context-flag>
+        const NAVIGATION_BROWSING_CONTEXT = 1;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-auxiliary-navigation-browsing-context-flag>
+        const AUXILIARY_NAVIGATION_BROWSING_CONTEXT = 1 << 1;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-top-level-navigation-without-user-activation-browsing-context-flag>
+        const TOP_LEVEL_NAVIGATION_WITHOUT_USER_ACTIVATION_BROWSING_CONTEXT = 1 << 2;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-top-level-navigation-with-user-activation-browsing-context-flag>
+        const TOP_LEVEL_NAVIGATION_WITH_USER_ACTIVATION_BROWSING_CONTEXT = 1 << 3;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-origin-browsing-context-flag>
+        const ORIGIN_BROWSING_CONTEXT = 1 << 4;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-forms-browsing-context-flag>
+        const FORMS_BROWSING_CONTEXT = 1 << 5;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-pointer-lock-browsing-context-flag>
+        const POINTER_LOCK_BROWSING_CONTEXT = 1 << 6;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-scripts-browsing-context-flag>
+        const SCRIPTS_BROWSING_CONTEXT = 1 << 7;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-automatic-features-browsing-context-flag>
+        const AUTOMATIC_FEATURES_BROWSING_CONTEXT = 1 << 8;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-document.domain-browsing-context-flag>
+        const DOCUMENT_DOMAIN_BROWSING_CONTEXT = 1 << 9;
+        /// <https://html.spec.whatwg.org/multipage/#sandbox-propagates-to-auxiliary-browsing-contexts-flag>
+        const PROPAGATES_TO_AUXILIARY_BROWSING_CONTEXT = 1 << 10;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-modals-flag>
+        const MODALS = 1 << 11;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-orientation-lock-browsing-context-flag>
+        const ORIENTATION_LOCK_BROWSING_CONTEXT = 1 << 12;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-presentation-browsing-context-flag>
+        const PRESENTATION_BROWSING_CONTEXT = 1 << 13;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-downloads-browsing-context-flag>
+        const DOWNLOADS_BROWSING_CONTEXT = 1 << 14;
+        /// <https://html.spec.whatwg.org/multipage/#sandboxed-custom-protocols-navigation-browsing-context-flag>
+        const CUSTOM_PROTOCOLS_NAVIGATION_BROWSING_CONTEXT = 1 << 15;
+
+    }
+}
+
 /// <https://html.spec.whatwg.org/multipage/#determining-the-origin>
 pub fn determin_origin(
     url: Option<&DOMUrl>,
-    flags: bool,
+    flags: SandboxingFlag,
     origin: Option<ImmutableOrigin>,
 ) -> ImmutableOrigin {
     // 1. If sandboxFlags has its sandboxed origin browsing context flag set, then return a new opaque origin.
-    if flags {
+    if flags.contains(SandboxingFlag::ORIGIN_BROWSING_CONTEXT) {
         return ImmutableOrigin::new_opaque();
     }
     match (url, origin) {

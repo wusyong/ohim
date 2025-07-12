@@ -1700,6 +1700,7 @@ name = "ohim"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bitflags 2.9.1",
  "headers",
  "malloc_size_of_derive",
  "regex",

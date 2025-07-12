@@ -151,8 +151,10 @@ impl Navigable {
         referer_policy: ReferrerPolicy,
         involvement: Option<bool>,
         element: Option<Element>,
-        initialInsertion: bool,
+        initial_insertion: bool,
     ) {
+        // 1. Let cspNavigationType be "form-submission" if formDataEntryList is non-null; otherwise "other".
+        let csp_type = entry_list.is_some();
     }
 }
 
