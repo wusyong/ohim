@@ -15,12 +15,12 @@ use ohim::dom::node::Host;
 use wasmtime::{Store, component::ResourceTable};
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiView};
 
+pub mod agent;
 pub mod browsing_context;
 pub mod dom;
 pub mod navigible;
 pub mod string;
 pub mod url;
-pub mod user_agent;
 
 #[allow(missing_debug_implementations, missing_docs, unreachable_pub)]
 mod bindings {

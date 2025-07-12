@@ -4,7 +4,7 @@ use std::{
     collections::{HashMap, HashSet},
     ops::Deref,
     sync::{
-        LazyLock,
+        Arc, LazyLock, Mutex,
         atomic::{AtomicUsize, Ordering},
     },
     time::Instant,
@@ -13,13 +13,12 @@ use std::{
 
 use bitflags::{Flags, bitflags};
 use headers::ContentType;
-use url::Url;
 use wasmtime::AsContextMut;
 
 use crate::{
     Document, DocumentMode,
+    agent::{Agent, AgentCluster},
     url::{DOMUrl, ImmutableOrigin},
-    user_agent::{Agent, AgentCluster},
 };
 
 /// <https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context>
@@ -31,13 +30,20 @@ pub struct BrowsingContext {
     popup_flag: SandboxingFlag,
 }
 
+/// <https://html.spec.whatwg.org/multipage/#browsing-context-set>
+static BROWSING_CONTEXT_SET: LazyLock<Arc<Mutex<HashMap<BrowsingContextID, BrowsingContext>>>> =
+    LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
+
 impl BrowsingContext {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-top-level-browsing-context>
-    pub fn new_top_browsing_context(
-        store: impl AsContextMut,
-    ) -> (BrowsingContextGroup, Self, Document) {
+    pub fn new_top_browsing_context(store: impl AsContextMut) -> (BrowsingContextID, Document) {
         // 1. Let group and document be the result of creating a new browsing context group and document.
-        BrowsingContextGroup::new_browsing_context_group_and_document(store)
+        let (context, document) =
+            BrowsingContextGroup::new_browsing_context_group_and_document(store);
+        let id = context.id();
+        BROWSING_CONTEXT_SET.lock().unwrap().insert(id, context);
+
+        (id, document)
     }
 
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context>
@@ -123,6 +129,11 @@ impl BrowsingContext {
     }
 }
 
+/// <https://html.spec.whatwg.org/multipage/#browsing-context-group-set>
+static BROWSING_CONTEXT_GROUP_SET: LazyLock<
+    Arc<Mutex<HashMap<BrowsingContextGroupID, BrowsingContextGroup>>>,
+> = LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
+
 /// <https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context-group>
 #[derive(Debug, Default)]
 pub struct BrowsingContextGroup {
@@ -137,11 +148,9 @@ impl BrowsingContextGroup {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context-group-and-document>
     pub fn new_browsing_context_group_and_document(
         store: impl AsContextMut,
-    ) -> (Self, BrowsingContext, Document) {
+    ) -> (BrowsingContext, Document) {
         // 1. Let group be a new browsing context group.
         let mut group = BrowsingContextGroup::default();
-        // 2. Append group to the user agent's browsing context group set.
-        // This is done by returning Self.
         // 3. Let browsingContext and document be the result of creating a new browsing context and document with null,
         // null, and group.
         let (mut context, document) =
@@ -149,8 +158,11 @@ impl BrowsingContextGroup {
         // 4. Append browsingContext to group.
         group.browsing_context.insert(context.id());
         context.group = Some(group.id());
+        // 2. Append group to the user agent's browsing context group set.
+        let id = group.id();
+        BROWSING_CONTEXT_GROUP_SET.lock().unwrap().insert(id, group);
         // 5. Return group and document.
-        (group, context, document)
+        (context, document)
     }
 
     /// <https://html.spec.whatwg.org/multipage/#obtain-similar-origin-window-agent>
@@ -257,7 +269,7 @@ pub enum IsolationMode {
 bitflags! {
     /// <https://html.spec.whatwg.org/multipage/#sandboxing-flag-set>
     #[derive(Clone, Copy, Debug)]
-    pub(crate) struct SandboxingFlag: u32 {
+    pub struct SandboxingFlag: u32 {
         /// <https://html.spec.whatwg.org/multipage/#sandboxed-navigation-browsing-context-flag>
         const NAVIGATION_BROWSING_CONTEXT = 1;
         /// <https://html.spec.whatwg.org/multipage/#sandboxed-auxiliary-navigation-browsing-context-flag>

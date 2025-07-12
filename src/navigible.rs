@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     ops::Deref,
     sync::{
-        LazyLock,
+        Arc, LazyLock, Mutex,
         atomic::{AtomicUsize, Ordering},
     },
     usize,
@@ -20,6 +20,11 @@ use crate::{
     url::{DOMUrl, ImmutableOrigin},
 };
 
+/// <https://html.spec.whatwg.org/multipage/#top-level-traversable-set>
+static TOP_LEVEL_TRAVERSABLE_SET: LazyLock<Arc<Mutex<HashMap<NavigableID, Navigable>>>> =
+    LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+/// <https://html.spec.whatwg.org/multipage/#traversable-navigable>
 #[derive(Debug, Default)]
 pub struct Traversable {
     history_entries: HashMap<SessionHistoryID, SessionHistory>,
@@ -33,9 +38,6 @@ pub struct Navigable {
     current_entry: Option<SessionHistoryID>,
     active_entry: Option<SessionHistoryID>,
     traversable: Option<Traversable>,
-    // FIXME: These should go to user agent
-    browsing_context: HashMap<BrowsingContextID, BrowsingContext>,
-    browsing_context_group: HashMap<BrowsingContextGroupID, BrowsingContextGroup>,
 }
 
 impl Navigable {
@@ -60,7 +62,7 @@ impl Navigable {
         target: String,
         navigable: Option<Navigable>,
         mut store: impl AsContextMut,
-    ) -> Self {
+    ) -> NavigableID {
         // 5. Let traversable be a new traversable navigable.
         let mut traversable = Self::default();
         // 1. Let document be null.
@@ -68,10 +70,7 @@ impl Navigable {
             // 2. If opener is null, then set document to the second return value of creating a new top-level browsing
             // context and document.
             None => {
-                let (group, context, document) =
-                    BrowsingContext::new_top_browsing_context(&mut store);
-                traversable.browsing_context_group.insert(group.id(), group);
-                traversable.browsing_context.insert(context.id(), context);
+                let (context, document) = BrowsingContext::new_top_browsing_context(&mut store);
                 document
             }
             // 3. Otherwise, set document to the second return value of creating a new auxiliary browsing context and
@@ -105,11 +104,16 @@ impl Navigable {
             .insert(initial_entry.id, initial_entry);
         // 10. TODO: If opener is non-null, then legacy-clone a traversable storage shed given opener's
         // top-level traversable and traversable.
-        // 11. TODO: Append traversable to the user agent's top-level traversable set.
+        // 11. Append traversable to the user agent's top-level traversable set.
+        let id = traversable.id;
+        TOP_LEVEL_TRAVERSABLE_SET
+            .lock()
+            .unwrap()
+            .insert(id, traversable);
         // 12. TODO: Invoke WebDriver BiDi navigable created with traversable and openerNavigableForWebDriver.
 
         // 13. Return traversable.
-        traversable
+        id
     }
 
     /// <https://html.spec.whatwg.org/multipage/#initialize-the-navigable>
