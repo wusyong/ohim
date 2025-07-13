@@ -1,4 +1,4 @@
-use crate::event_target::IsEventTarget;
+use crate::IsEventTarget;
 
 /// <https://dom.spec.whatwg.org/#event>
 #[derive(Clone, Debug)]

@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
-use crate::{NodeImpl, NodeTypeData, WindowStates, object::Object, ohim::dom::node::HostElement};
+use crate::{NodeImpl, NodeTypeData, Object, WindowStates, ohim::dom::node::HostElement};
 
 /// <https://dom.spec.whatwg.org/#element>
 #[derive(Clone, Debug)]

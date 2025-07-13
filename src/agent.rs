@@ -9,7 +9,7 @@ use std::{
     },
 };
 
-use crate::browsing_context::IsolationMode;
+use crate::{Window, WindowProxy, browsing_context::IsolationMode};
 
 /// <https://tc39.es/ecma262/#sec-agent-clusters>
 #[derive(Debug, Default)]
@@ -73,8 +73,8 @@ impl Deref for AgentID {
 pub struct Realm {
     id: RealmID,
     agent: AgentID,
-    global_object: Option<bool>,
-    global_this: Option<bool>,
+    global_object: Option<Window>,
+    global_this: Option<WindowProxy>,
 }
 
 impl Realm {
@@ -83,7 +83,11 @@ impl Realm {
     /// # Note
     /// This returns `Realm` because there are more steps outside of this method to complete. Please
     /// make sure to run those steps and insert the `Realm` into `RELEVANT_REALM`
-    pub fn create(agent: AgentID, global_object: Option<bool>, global_this: Option<bool>) -> Realm {
+    pub fn create(
+        agent: AgentID,
+        global_object: Option<Window>,
+        global_this: Option<WindowProxy>,
+    ) -> Realm {
         let id = RealmID::default();
         Self {
             id,

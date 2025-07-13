@@ -4,9 +4,8 @@ use headers::ContentType;
 use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
 use crate::{
-    Element, NodeImpl, NodeTypeData, WindowStates,
+    Element, NodeImpl, NodeTypeData, Object, WindowStates,
     browsing_context::{BrowsingContextID, SandboxingFlag},
-    object::Object,
     ohim::dom::node::HostDocument,
     url::{DOMUrl, ImmutableOrigin},
 };

@@ -16,7 +16,7 @@ use headers::ContentType;
 use wasmtime::AsContextMut;
 
 use crate::{
-    Document, DocumentMode,
+    Document, DocumentMode, Window, WindowProxy,
     agent::{Agent, AgentCluster, AgentID, Realm},
     url::{DOMUrl, ImmutableOrigin},
 };
@@ -52,7 +52,7 @@ impl BrowsingContext {
         creator: Option<Document>,
         embedder: Option<bool>,
         group: &mut BrowsingContextGroup,
-        store: impl AsContextMut,
+        mut store: impl AsContextMut,
     ) -> (Self, Document) {
         // 1. Let browsingContext be a new browsing context.
         let context = BrowsingContext {
@@ -82,9 +82,11 @@ impl BrowsingContext {
         // 9. Let agent be the result of obtaining a similar-origin window agent given origin, group, and false.
         let agent = group.window_agent(&origin, false);
         // 10. Let realm execution context be the result of creating a new realm given agent and the following customizations:
-        let realm = Realm::create(agent, None, None);
-        // TODO: For the global object, create a new Window object.
-        // TODO: For the global this binding, use browsingContext's WindowProxy object.
+        let realm = Realm::create(
+            agent,
+            Some(Window::new(&mut store).expect("Failed to create window")),
+            Some(WindowProxy {}),
+        );
         // TODO: step 11 ~13
 
         // 14. Let loadTimingInfo be a new document load timing info with its navigation start time set to the result

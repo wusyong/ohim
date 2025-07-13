@@ -3,8 +3,7 @@ use std::ops::Deref;
 use wasmtime::{AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
 use crate::{
-    EventTarget, WindowStates, document::DocumentImpl, element::ElementImpl, object::Object,
-    ohim::dom::node::HostNode,
+    DocumentImpl, ElementImpl, EventTarget, Object, WindowStates, ohim::dom::node::HostNode,
 };
 
 /// <https://dom.spec.whatwg.org/#node>
