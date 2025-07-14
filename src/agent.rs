@@ -9,7 +9,11 @@ use std::{
     },
 };
 
-use crate::{Window, WindowProxy, browsing_context::IsolationMode};
+use crate::{
+    Window, WindowProxy,
+    browsing_context::{self, BrowsingContextID, IsolationMode},
+    url::{DOMUrl, ImmutableOrigin},
+};
 
 /// <https://tc39.es/ecma262/#sec-agent-clusters>
 #[derive(Debug, Default)]
@@ -75,6 +79,7 @@ pub struct Realm {
     agent: AgentID,
     global_object: Option<Window>,
     global_this: Option<WindowProxy>,
+    settings_object: Option<Environment>,
 }
 
 impl Realm {
@@ -94,12 +99,44 @@ impl Realm {
             agent,
             global_object,
             global_this,
+            settings_object: None,
         }
     }
 
     /// Get the ID of `Agent`
     pub fn id(&self) -> RealmID {
         self.id
+    }
+
+    /// <https://html.spec.whatwg.org/multipage/#set-up-a-window-environment-settings-object>
+    pub fn set_window_settings_object(
+        mut self,
+        creation_url: DOMUrl,
+        top_url: DOMUrl,
+        top_origin: ImmutableOrigin,
+        environment: Option<Environment>,
+    ) {
+        let (id, browsing_context) = match environment {
+            // 4. If reservedEnvironment is non-null, then:
+            Some(e) => (e.id, e.browsing_context),
+            // 5. Otherwise, set settings object's id to a new unique opaque string, settings object's target
+            // browsing context to null, and settings object's active service worker to null.
+            None => (EnvironmentID::default(), None),
+        };
+        // 6. Set settings object's creation URL to creationURL, settings object's top-level creation URL to
+        // topLevelCreationURL, and settings object's top-level origin to topLevelOrigin.
+        let settings_object = Environment {
+            id,
+            creation_url,
+            top_url: Some(top_url),
+            top_origin: Some(top_origin),
+            browsing_context,
+            ready: false,
+        };
+        // 7. Set realm's [[HostDefined]] field to settings object.
+        self.settings_object = Some(settings_object);
+        let id = self.id;
+        RELEVANT_REALM.lock().unwrap().insert(id, self);
     }
 }
 
@@ -121,6 +158,39 @@ impl Default for RealmID {
 }
 
 impl Deref for RealmID {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// <https://html.spec.whatwg.org/multipage/#environment>
+#[derive(Debug)]
+pub struct Environment {
+    id: EnvironmentID,
+    creation_url: DOMUrl,
+    top_url: Option<DOMUrl>,
+    top_origin: Option<ImmutableOrigin>,
+    browsing_context: Option<BrowsingContextID>,
+    ready: bool,
+    // TODO: An active service worker
+}
+
+/// ID of `Environment`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct EnvironmentID(pub usize);
+
+impl Default for EnvironmentID {
+    fn default() -> Self {
+        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+        let id = Self(COUNT.load(Ordering::Relaxed));
+        COUNT.fetch_add(1, Ordering::Relaxed);
+        id
+    }
+}
+
+impl Deref for EnvironmentID {
     type Target = usize;
 
     fn deref(&self) -> &Self::Target {

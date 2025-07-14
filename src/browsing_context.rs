@@ -87,7 +87,19 @@ impl BrowsingContext {
             Some(Window::new(&mut store).expect("Failed to create window")),
             Some(WindowProxy {}),
         );
-        // TODO: step 11 ~13
+        // 11. Let topLevelCreationURL be about:blank if embedder is null; TODO: otherwise embedder's relevant settings
+        // object's top-level creation URL.
+        let top_url = DOMUrl::parse("about:blank").unwrap();
+        // 12. Let topLevelOrigin be origin if embedder is null; TODO: otherwise embedder's relevant settings object's top-level origin.
+        let top_origin = origin.clone();
+        // 13. Set up a window environment settings object with about:blank, realm execution context, null,
+        // topLevelCreationURL, and topLevelOrigin.
+        realm.set_window_settings_object(
+            DOMUrl::parse("about:blank").unwrap(),
+            top_url,
+            top_origin,
+            None,
+        );
 
         // 14. Let loadTimingInfo be a new document load timing info with its navigation start time set to the result
         // of calling coarsen time with unsafeContextCreationTime and the new environment settings object's
@@ -112,9 +124,12 @@ impl BrowsingContext {
         )
         .expect("Failed to create document");
         // 16. TODO: If creator is non-null, then:
-        // 17 TODO: Assert: document's URL and document's relevant settings object's creation URL are about:blank.
-        // 18. TODO: Mark document as ready for post-load tasks.
+        // 18. Mark document as ready for post-load tasks.
+        // XXX: Unimplemented because this is only used for printing.
+
+        // 19. Populate with html/head/body given document.
         // TODO: 19~21
+        // 22. Return browsingContext and document.
         (context, document)
     }
 
