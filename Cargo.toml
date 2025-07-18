@@ -25,7 +25,6 @@ members = ["wasm"]
 wasmtime = "34.0"
 wasmtime-wasi = "34.0"
 wit-component = "0.235.0"
-wit-bindgen = { version = "0.43.0", default-features = false }
 # Servo crates
 malloc_size_of = { package = "servo_malloc_size_of", git = "https://github.com/servo/servo" }
 malloc_size_of_derive = "0.1"

@@ -1,2 +1,11 @@
 /target
 .DS_Store
+
+# Ignore build artifacts
+ohim:dom.wasm
+
+# Ignore go-guest build artifacts
+go-guest/wkg.lock
+go-guest/internal
+go-guest/domparser.wasm
+go-guest/test.wasm

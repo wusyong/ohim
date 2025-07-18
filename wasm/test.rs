@@ -3,7 +3,7 @@ use ohim::dom::node::Document;
 // cargo component build
 wit_bindgen::generate!({
     path: "../wit/",
-    world: "imports",
+    world: "ohim:dom/imports",
 });
 
 struct GuestComponent;
