@@ -197,3 +197,12 @@ impl Deref for EnvironmentID {
         &self.0
     }
 }
+
+/// <https://infra.spec.whatwg.org/#namespaces>
+#[derive(Clone, Copy, Debug)]
+pub enum NameSpace {
+    /// <https://infra.spec.whatwg.org/#html-namespace>
+    HTML,
+    /// None
+    None,
+}

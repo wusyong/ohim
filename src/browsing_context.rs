@@ -8,10 +8,9 @@ use std::{
         atomic::{AtomicUsize, Ordering},
     },
     time::Instant,
-    u16,
 };
 
-use bitflags::{Flags, bitflags};
+use bitflags::bitflags;
 use headers::ContentType;
 use wasmtime::AsContextMut;
 
@@ -49,7 +48,7 @@ impl BrowsingContext {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context>
     /// TODO: implement embedder
     pub fn new_browsing_context(
-        creator: Option<Document>,
+        _creator: Option<Document>,
         embedder: Option<bool>,
         group: &mut BrowsingContextGroup,
         mut store: impl AsContextMut,
@@ -61,7 +60,7 @@ impl BrowsingContext {
             popup_flag: SandboxingFlag::empty(),
         };
         // 2. Let unsafeContextCreationTime be the unsafe shared current time.
-        let time = Instant::now();
+        let _time = Instant::now();
         // 3. Let creatorOrigin be null.
         let creator_origin: Option<ImmutableOrigin> = None;
         // 4. Let creatorBaseURL be null.
