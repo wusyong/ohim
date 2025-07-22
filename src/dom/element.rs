@@ -7,7 +7,7 @@ use crate::{
     string::DOMString,
 };
 
-use super::{Document, HTMLElementImpl, HTMLElementType};
+use super::{Document, HTMLElementImpl, HTMLElementType, Node};
 
 /// <https://dom.spec.whatwg.org/#element>
 #[derive(Clone, Debug)]
@@ -49,6 +49,11 @@ impl Element {
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         self
+    }
+
+    /// Get reference of the `Node`.
+    pub fn to_node(&self) -> Node {
+        Node(self.0.clone())
     }
 }
 

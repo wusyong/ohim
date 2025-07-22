@@ -1,10 +1,4 @@
-use std::{
-    ops::Deref,
-    sync::{
-        LazyLock,
-        atomic::{AtomicUsize, Ordering},
-    },
-};
+use std::ops::Deref;
 
 use headers::ContentType;
 use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
@@ -17,7 +11,7 @@ use crate::{
     url::{DOMUrl, ImmutableOrigin},
 };
 
-use super::ElementLocal;
+use super::{ElementLocal, Node};
 
 /// <https://dom.spec.whatwg.org/#document>
 #[derive(Clone, Debug)]
@@ -86,19 +80,33 @@ impl Document {
     }
 
     /// <https://html.spec.whatwg.org/multipage/#populate-with-html/head/body>
-    pub fn populate_hhb(&self, mut store: impl AsContextMut) {
+    pub fn populate_hhb(&self, mut store: impl AsContextMut) -> Result<()> {
         // 1. Let html be the result of creating an element given document, "html", and the HTML namespace.
-        let html = Element::new(self, ElementLocal::Html, NameSpace::HTML, None, &mut store);
+        let html =
+            Element::new(self, ElementLocal::Html, NameSpace::HTML, None, &mut store)?.to_node();
         // 2. Let head be the result of creating an element given document, "head", and the HTML namespace.
-        let head = Element::new(self, ElementLocal::Head, NameSpace::HTML, None, &mut store);
+        let head =
+            Element::new(self, ElementLocal::Head, NameSpace::HTML, None, &mut store)?.to_node();
         // 3. Let body be the result of creating an element given document, "body", and the HTML namespace.
-        let body = Element::new(self, ElementLocal::Body, NameSpace::HTML, None, &mut store);
-        // let document = self.data(&store).as_document();
+        let body =
+            Element::new(self, ElementLocal::Body, NameSpace::HTML, None, &mut store)?.to_node();
+        // 4. Append html to document.
+        self.to_node().pre_insert(html.clone(), None, &mut store);
+        // 5. Append head to html.
+        html.pre_insert(head, None, &mut store);
+        // 6. Append body to html.
+        html.pre_insert(body, None, &mut store);
+        Ok(())
     }
 
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         self
+    }
+
+    /// Get reference of the `Node`.
+    pub fn to_node(&self) -> Node {
+        Node(self.0.clone())
     }
 }
 

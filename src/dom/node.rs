@@ -10,12 +10,12 @@ use super::Document;
 
 /// <https://dom.spec.whatwg.org/#node>
 #[derive(Clone, Debug)]
-pub struct Node(Object<NodeImpl>);
+pub struct Node(pub(crate) Object<NodeImpl>);
 
 // TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Node {
     /// <https://dom.spec.whatwg.org/#concept-node-pre-insert>
-    pub fn pre_insert(&self, node: &Node, child: Option<&Node>, mut store: impl AsContextMut) {
+    pub fn pre_insert(&self, node: Node, child: Option<&Node>, mut store: impl AsContextMut) {
         // TODO:
         // 1. Ensure pre-insert validity of node into parent before child.
 
@@ -30,12 +30,13 @@ impl Node {
 
         // TODO:
         // 4. Insert node into parent before referenceChild.
+        self.insert(node, child, false, store);
     }
 
     /// <https://dom.spec.whatwg.org/#concept-node-insert>
     pub fn insert(
         &self,
-        node: &Node,
+        node: Node,
         child: Option<&Node>,
         _suppress: bool,
         mut store: impl AsContextMut,
@@ -54,6 +55,21 @@ impl Node {
         for node in nodes {
             // 7.1 Adopt node into parent’s node document.
             node.adopt(self.data(&store).node_document.clone(), &mut store);
+            match child {
+                // TODO: Connect sibling
+                // 7.2 If child is null, then append node to parent’s children.
+                None => self.data_mut(&mut store).child_nodes.push_back(node),
+                // 7.3 Otherwise, insert node into parent’s children before child’s index.
+                Some(c) => {
+                    if let Some(index) = self.data(&store).child_nodes.iter().position(|n| {
+                        Rooted::ref_eq(&store, n.as_root(), c.as_root()).unwrap_or_default()
+                    }) {
+                        self.data_mut(&mut store).child_nodes.insert(index, node);
+                    } else {
+                        // TODO: log warning!
+                    }
+                }
+            }
             // TODO: Step 7.4 ~ 7.7
         }
         // TODO: Step 8 ~ 12
@@ -149,7 +165,7 @@ impl HostNode for WindowStates {
     ) -> Result<Resource<Node>> {
         // TODO: properly handle error for all host traits
         let self_ = self.table.get(&self_)?;
-        let child_ = self.table.get(&child)?;
+        let child_ = self.table.get(&child)?.clone();
         self_.pre_insert(child_, None, &mut self.store);
         Ok(child)
     }
