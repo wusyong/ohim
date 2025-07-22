@@ -11,7 +11,7 @@ use std::{
 
 use crate::{
     Window, WindowProxy,
-    browsing_context::{self, BrowsingContextID, IsolationMode},
+    browsing_context::{BrowsingContextID, IsolationMode},
     url::{DOMUrl, ImmutableOrigin},
 };
 
@@ -22,6 +22,7 @@ pub struct AgentCluster {
     pub isolation_mode: IsolationMode,
     /// <https://html.spec.whatwg.org/multipage/#is-origin-keyed>
     pub origin_keyed: bool,
+    /// TODO: This should be list of agents
     pub agent: AgentID,
 }
 
@@ -29,14 +30,14 @@ pub struct AgentCluster {
 #[derive(Debug, Default)]
 pub struct Agent {
     id: AgentID,
-    block: bool,
+    _block: bool,
 }
 
 impl Agent {
     /// <https://html.spec.whatwg.org/multipage/#create-an-agent>
     pub fn create(block: bool) -> AgentID {
         let id = AgentID::default();
-        let agent = Self { id, block };
+        let agent = Self { id, _block: block };
         RELEVANT_AGENT.lock().unwrap().insert(id, agent);
         id
     }
@@ -76,9 +77,9 @@ impl Deref for AgentID {
 #[derive(Debug, Default)]
 pub struct Realm {
     id: RealmID,
-    agent: AgentID,
-    global_object: Option<Window>,
-    global_this: Option<WindowProxy>,
+    _agent: AgentID,
+    _global_object: Option<Window>,
+    _global_this: Option<WindowProxy>,
     settings_object: Option<Environment>,
 }
 
@@ -96,9 +97,9 @@ impl Realm {
         let id = RealmID::default();
         Self {
             id,
-            agent,
-            global_object,
-            global_this,
+            _agent: agent,
+            _global_object: global_object,
+            _global_this: global_this,
             settings_object: None,
         }
     }
@@ -127,11 +128,11 @@ impl Realm {
         // topLevelCreationURL, and settings object's top-level origin to topLevelOrigin.
         let settings_object = Environment {
             id,
-            creation_url,
-            top_url: Some(top_url),
-            top_origin: Some(top_origin),
+            _creation_url: creation_url,
+            _top_url: Some(top_url),
+            _top_origin: Some(top_origin),
             browsing_context,
-            ready: false,
+            _ready: false,
         };
         // 7. Set realm's [[HostDefined]] field to settings object.
         self.settings_object = Some(settings_object);
@@ -169,11 +170,11 @@ impl Deref for RealmID {
 #[derive(Debug)]
 pub struct Environment {
     id: EnvironmentID,
-    creation_url: DOMUrl,
-    top_url: Option<DOMUrl>,
-    top_origin: Option<ImmutableOrigin>,
+    _creation_url: DOMUrl,
+    _top_url: Option<DOMUrl>,
+    _top_origin: Option<ImmutableOrigin>,
     browsing_context: Option<BrowsingContextID>,
-    ready: bool,
+    _ready: bool,
     // TODO: An active service worker
 }
 

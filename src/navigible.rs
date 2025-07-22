@@ -12,7 +12,7 @@ use std::{
 use wasmtime::AsContextMut;
 
 use crate::{
-    Document, Element,
+    Document,
     browsing_context::BrowsingContext,
     url::{DOMUrl, ImmutableOrigin},
 };
@@ -41,12 +41,12 @@ impl Navigable {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#create-a-fresh-top-level-traversable>
     /// TODO: implement POST resource
     pub fn create_fresh_top_traversable(
-        url: DOMUrl,
-        resource: Option<bool>,
+        _url: DOMUrl,
+        _resource: Option<bool>,
         store: impl AsContextMut,
     ) -> Self {
         // 1. Let traversable be the result of creating a new top-level traversable given null and the empty string.
-        let traversable = Navigable::create_top_traversable(None, String::from(""), None, store);
+        let _traversable = Navigable::create_top_traversable(None, String::from(""), None, store);
         // 2. Navigate traversable to initialNavigationURL using traversable's active document,
         // with documentResource set to initialNavigationPostResource.
         todo!()
@@ -56,7 +56,7 @@ impl Navigable {
     pub fn create_top_traversable(
         opener: Option<bool>,
         target: String,
-        navigable: Option<Navigable>,
+        _navigable: Option<Navigable>,
         mut store: impl AsContextMut,
     ) -> NavigableID {
         // 5. Let traversable be a new traversable navigable.
@@ -66,7 +66,7 @@ impl Navigable {
             // 2. If opener is null, then set document to the second return value of creating a new top-level browsing
             // context and document.
             None => {
-                let (context, document) = BrowsingContext::new_top_browsing_context(&mut store);
+                let (_context, document) = BrowsingContext::new_top_browsing_context(&mut store);
                 document
             }
             // 3. Otherwise, set document to the second return value of creating a new auxiliary browsing context and
@@ -135,27 +135,27 @@ impl Navigable {
         entry
     }
 
-    /// <https://html.spec.whatwg.org/multipage/#navigate>
-    /// TODO: response, navigationAPIState, formDataEntryList, userInvolvement
-    #[allow(clippy::too_many_arguments)]
-    pub fn navigate(
-        &self,
-        url: DOMUrl,
-        documet: Option<Document>,
-        resource: Option<bool>,
-        response: Option<bool>,
-        exception: bool,
-        history_handling: NavigationHistoryBehavior,
-        api_state: Option<bool>,
-        entry_list: Option<bool>,
-        referer_policy: ReferrerPolicy,
-        involvement: Option<bool>,
-        element: Option<Element>,
-        initial_insertion: bool,
-    ) {
-        // 1. Let cspNavigationType be "form-submission" if formDataEntryList is non-null; otherwise "other".
-        let csp_type = entry_list.is_some();
-    }
+    // /// <https://html.spec.whatwg.org/multipage/#navigate>
+    // /// TODO: response, navigationAPIState, formDataEntryList, userInvolvement
+    // #[allow(clippy::too_many_arguments)]
+    // pub fn navigate(
+    //     &self,
+    //     url: DOMUrl,
+    //     documet: Option<Document>,
+    //     resource: Option<bool>,
+    //     response: Option<bool>,
+    //     exception: bool,
+    //     history_handling: NavigationHistoryBehavior,
+    //     api_state: Option<bool>,
+    //     entry_list: Option<bool>,
+    //     referer_policy: ReferrerPolicy,
+    //     involvement: Option<bool>,
+    //     element: Option<Element>,
+    //     initial_insertion: bool,
+    // ) {
+    //     // 1. Let cspNavigationType be "form-submission" if formDataEntryList is non-null; otherwise "other".
+    //     let csp_type = entry_list.is_some();
+    // }
 }
 
 /// ID of `Navigable`.
@@ -182,6 +182,7 @@ impl Deref for NavigableID {
 /// <https://html.spec.whatwg.org/multipage/#session-history-entry>
 #[derive(Clone, Debug)]
 pub struct SessionHistory {
+    /// ID of SessionHistory.
     pub id: SessionHistoryID,
     /// <https://html.spec.whatwg.org/multipage/#she-step>
     pub step: Option<usize>,

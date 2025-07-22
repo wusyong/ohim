@@ -1,39 +1,37 @@
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
-use wasmtime::AsContextMut;
-
 use crate::{Event, Node};
 
 /// <https://dom.spec.whatwg.org/#eventtarget>
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct EventTarget {
-    callbacks: Option<HashMap<String, EventListener>>,
+    _callbacks: Option<HashMap<String, EventListener>>,
 }
 
 impl EventTarget {
     /// Create an `EventTarget` with empty `EventListener`.
     pub fn new() -> Self {
-        Self { callbacks: None }
+        Self::default()
     }
 }
 
-impl EventTarget {
-    fn add_event_listener(
-        &mut self,
-        ty: String,
-        callback: EventListener,
-        store: impl AsContextMut,
-    ) {
-    }
-    fn remove_event_listener(
-        &mut self,
-        ty: String,
-        callback: EventListener,
-        store: impl AsContextMut,
-    ) {
-    }
-    fn dispatch_event(&self, event: Event) {}
-}
+// impl EventTarget {
+//     fn add_event_listener(
+//         &mut self,
+//         ty: String,
+//         callback: EventListener,
+//         store: impl AsContextMut,
+//     ) {
+//     }
+//     fn remove_event_listener(
+//         &mut self,
+//         ty: String,
+//         callback: EventListener,
+//         store: impl AsContextMut,
+//     ) {
+//     }
+//     fn dispatch_event(&self, event: Event) {}
+// }
 
 /// <https://dom.spec.whatwg.org/#callbackdef-eventlistener>
 #[derive(Clone)]
