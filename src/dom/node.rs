@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{collections::VecDeque, ops::Deref, sync::OnceLock};
 
 use wasmtime::{AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
@@ -6,26 +6,16 @@ use crate::{
     DocumentImpl, ElementImpl, EventTarget, Object, WindowStates, ohim::dom::node::HostNode,
 };
 
+use super::Document;
+
 /// <https://dom.spec.whatwg.org/#node>
 #[derive(Clone, Debug)]
 pub struct Node(Object<NodeImpl>);
 
 // TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Node {
-    /// <https://dom.spec.whatwg.org/#concept-node-append>
-    pub fn append(&self, node: &Node, store: impl AsContextMut) -> Node {
-        // To append a node to a parent, pre-insert node into parent before null.
-        self.pre_insert(node, None, store)
-    }
-
     /// <https://dom.spec.whatwg.org/#concept-node-pre-insert>
-    pub fn pre_insert(
-        &self,
-        node: &Node,
-        child: Option<&Node>,
-        mut store: impl AsContextMut,
-    ) -> Node {
-        // To pre-insert a node into a parent before a child, run these steps:
+    pub fn pre_insert(&self, node: &Node, child: Option<&Node>, mut store: impl AsContextMut) {
         // TODO:
         // 1. Ensure pre-insert validity of node into parent before child.
 
@@ -40,9 +30,43 @@ impl Node {
 
         // TODO:
         // 4. Insert node into parent before referenceChild.
+    }
 
-        // 5. Return node.
-        node.clone()
+    /// <https://dom.spec.whatwg.org/#concept-node-insert>
+    pub fn insert(
+        &self,
+        node: &Node,
+        child: Option<&Node>,
+        suppress: bool,
+        mut store: impl AsContextMut,
+    ) {
+        // 1. TODO: Let nodes be node’s children, if node is a DocumentFragment node; otherwise « node ».
+        // This should implement a node iterator in tree order.
+        let nodes = [node];
+        // 4. TODO: If node is a DocumentFragment node:
+        // 5. TODO: If child is non-null:
+        // 6. Let previousSibling be child’s previous sibling or parent’s last child if child is null.
+        let previous_sibling = match child {
+            Some(c) => c.data(&store).previous_sibling.as_ref(),
+            None => self.data(&store).last_child(),
+        };
+        // 7. For each node in nodes, in tree order:
+        for node in nodes {
+            // 7.1 Adopt node into parent’s node document.
+            // TODO: Step 7.4 ~ 7.7
+        }
+        // TODO: Step 8 ~ 12
+    }
+
+    /// <https://dom.spec.whatwg.org/#concept-node-adopt>
+    pub fn adopt(&self, node: &Node, document: &Document, mut store: impl AsContextMut) {
+        // 1. Let oldDocument be node’s node document.
+        let old_document = node.data(&store).node_document.as_ref();
+        // 2. TODO: If node’s parent is non-null, then remove node.
+        // 3. TODO: If document is not oldDocument:
+        // if old_document != Some(document) {
+        //
+        // }
     }
 
     /// Get `Rooted<ExternRef>` reference of the `Node`.
@@ -65,30 +89,35 @@ impl Deref for Node {
 pub struct NodeImpl {
     event_target: EventTarget,
     parent_node: Option<Node>,
-    first_child: Option<Node>,
-    last_child: Option<Node>,
+    child_nodes: VecDeque<Node>,
     previous_sibling: Option<Node>,
     next_sibling: Option<Node>,
+    node_document: Option<Document>,
     pub(crate) data: NodeTypeData,
 }
 
 impl NodeImpl {
-    /// Create an empty `NodeImpl`.
-    pub fn new() -> Self {
-        NodeImpl::new_with_type(NodeTypeData::None)
-    }
-
     /// Create an `NodeImpl` with provided node type data.
     pub fn new_with_type(data: NodeTypeData) -> Self {
         NodeImpl {
             event_target: EventTarget::new(),
             parent_node: None,
-            first_child: None,
-            last_child: None,
+            child_nodes: VecDeque::new(),
             previous_sibling: None,
             next_sibling: None,
+            node_document: None,
             data,
         }
+    }
+
+    /// Set Node's node document.
+    pub fn set_node_docuemnte(&mut self, document: Document) {
+        self.node_document = Some(document);
+    }
+
+    /// Get last child of node's child nodes.
+    pub fn last_child(&self) -> Option<&Node> {
+        self.child_nodes.back()
     }
 }
 
@@ -113,7 +142,7 @@ impl HostNode for WindowStates {
         // TODO: properly handle error for all host traits
         let self_ = self.table.get(&self_)?;
         let child_ = self.table.get(&child)?;
-        self_.append(&child_, &mut self.store);
+        self_.pre_insert(child_, None, &mut self.store);
         Ok(child)
     }
 

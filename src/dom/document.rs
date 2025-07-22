@@ -1,4 +1,10 @@
-use std::ops::Deref;
+use std::{
+    ops::Deref,
+    sync::{
+        LazyLock,
+        atomic::{AtomicUsize, Ordering},
+    },
+};
 
 use headers::ContentType;
 use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
@@ -32,10 +38,10 @@ impl Document {
         is_blank: bool,
         base_url: Option<DOMUrl>,
         allow_shadow: bool,
-        store: impl AsContextMut,
+        mut store: impl AsContextMut,
     ) -> Result<Self> {
-        Ok(Document(Object::new(
-            store,
+        let document = Document(Object::new(
+            &mut store,
             NodeImpl::new_with_type(NodeTypeData::Document(DocumentImpl::new(
                 is_html,
                 content_type,
@@ -49,7 +55,13 @@ impl Document {
                 base_url,
                 allow_shadow,
             ))),
-        )?))
+        )?);
+
+        document
+            .data_mut(&mut store)
+            .set_node_docuemnte(document.clone());
+
+        Ok(document)
     }
 
     /// <https://dom.spec.whatwg.org/#concept-document-origin>
@@ -119,6 +131,7 @@ impl Deref for Document {
 /// Implementation of acutal `Docuemt` object. This can be accessed from `NodeImpl`.
 #[derive(Debug)]
 pub struct DocumentImpl {
+    id: DocumentID,
     /// <https://dom.spec.whatwg.org/#concept-document-type>
     _is_html: bool,
     /// <https://dom.spec.whatwg.org/#concept-document-content-type>
@@ -165,6 +178,7 @@ impl DocumentImpl {
         allow_shadow: bool,
     ) -> Self {
         DocumentImpl {
+            id: DocumentID::get(),
             _is_html: is_html,
             _content_type: content_type,
             _mode: mode,
@@ -226,4 +240,17 @@ pub enum DocumentMode {
     Quirks,
     /// "limited-quirks"
     LimitedQuirks,
+}
+
+/// ID of `Document`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct DocumentID(pub usize);
+
+impl DocumentID {
+    fn get() -> Self {
+        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
+        let id = Self(COUNT.load(Ordering::Relaxed));
+        COUNT.fetch_add(1, Ordering::Relaxed);
+        id
+    }
 }
