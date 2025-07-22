@@ -59,7 +59,7 @@ impl Document {
 
         document
             .data_mut(&mut store)
-            .set_node_docuemnte(document.clone());
+            .set_node_document(Some(document.clone()));
 
         Ok(document)
     }
@@ -131,7 +131,6 @@ impl Deref for Document {
 /// Implementation of acutal `Docuemt` object. This can be accessed from `NodeImpl`.
 #[derive(Debug)]
 pub struct DocumentImpl {
-    id: DocumentID,
     /// <https://dom.spec.whatwg.org/#concept-document-type>
     _is_html: bool,
     /// <https://dom.spec.whatwg.org/#concept-document-content-type>
@@ -178,7 +177,6 @@ impl DocumentImpl {
         allow_shadow: bool,
     ) -> Self {
         DocumentImpl {
-            id: DocumentID::get(),
             _is_html: is_html,
             _content_type: content_type,
             _mode: mode,
@@ -240,17 +238,4 @@ pub enum DocumentMode {
     Quirks,
     /// "limited-quirks"
     LimitedQuirks,
-}
-
-/// ID of `Document`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct DocumentID(pub usize);
-
-impl DocumentID {
-    fn get() -> Self {
-        static COUNT: LazyLock<AtomicUsize> = LazyLock::new(|| AtomicUsize::new(0));
-        let id = Self(COUNT.load(Ordering::Relaxed));
-        COUNT.fetch_add(1, Ordering::Relaxed);
-        id
-    }
 }

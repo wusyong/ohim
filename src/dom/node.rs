@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, ops::Deref, sync::OnceLock};
+use std::{collections::VecDeque, ops::Deref};
 
 use wasmtime::{AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
@@ -37,7 +37,7 @@ impl Node {
         &self,
         node: &Node,
         child: Option<&Node>,
-        suppress: bool,
+        _suppress: bool,
         mut store: impl AsContextMut,
     ) {
         // 1. TODO: Let nodes be node’s children, if node is a DocumentFragment node; otherwise « node ».
@@ -46,27 +46,35 @@ impl Node {
         // 4. TODO: If node is a DocumentFragment node:
         // 5. TODO: If child is non-null:
         // 6. Let previousSibling be child’s previous sibling or parent’s last child if child is null.
-        let previous_sibling = match child {
+        let _previous_sibling = match child {
             Some(c) => c.data(&store).previous_sibling.as_ref(),
             None => self.data(&store).last_child(),
         };
         // 7. For each node in nodes, in tree order:
         for node in nodes {
             // 7.1 Adopt node into parent’s node document.
+            node.adopt(self.data(&store).node_document.clone(), &mut store);
             // TODO: Step 7.4 ~ 7.7
         }
         // TODO: Step 8 ~ 12
     }
 
     /// <https://dom.spec.whatwg.org/#concept-node-adopt>
-    pub fn adopt(&self, node: &Node, document: &Document, mut store: impl AsContextMut) {
+    pub fn adopt(&self, document: Option<Document>, mut store: impl AsContextMut) {
         // 1. Let oldDocument be node’s node document.
-        let old_document = node.data(&store).node_document.as_ref();
+        let old_document = self.data(&store).node_document.as_ref();
         // 2. TODO: If node’s parent is non-null, then remove node.
-        // 3. TODO: If document is not oldDocument:
-        // if old_document != Some(document) {
-        //
-        // }
+        // 3. If document is not oldDocument:
+        let not_same = match (&document, old_document) {
+            (Some(d), Some(od)) => {
+                Rooted::ref_eq(&store, d.as_root(), od.as_root()).unwrap_or_default()
+            }
+            _ => false,
+        };
+        if not_same {
+            // TODO: Step 3.1, 3.2, 3.3
+            self.data_mut(&mut store).set_node_document(document);
+        }
     }
 
     /// Get `Rooted<ExternRef>` reference of the `Node`.
@@ -87,8 +95,8 @@ impl Deref for Node {
 /// like `Document`, `Element`, `Attr`... etc. So it can also present as these types.
 #[derive(Debug)]
 pub struct NodeImpl {
-    event_target: EventTarget,
-    parent_node: Option<Node>,
+    _event_target: EventTarget,
+    _parent_node: Option<Node>,
     child_nodes: VecDeque<Node>,
     previous_sibling: Option<Node>,
     next_sibling: Option<Node>,
@@ -100,8 +108,8 @@ impl NodeImpl {
     /// Create an `NodeImpl` with provided node type data.
     pub fn new_with_type(data: NodeTypeData) -> Self {
         NodeImpl {
-            event_target: EventTarget::new(),
-            parent_node: None,
+            _event_target: EventTarget::new(),
+            _parent_node: None,
             child_nodes: VecDeque::new(),
             previous_sibling: None,
             next_sibling: None,
@@ -111,8 +119,8 @@ impl NodeImpl {
     }
 
     /// Set Node's node document.
-    pub fn set_node_docuemnte(&mut self, document: Document) {
-        self.node_document = Some(document);
+    pub fn set_node_document(&mut self, document: Option<Document>) {
+        self.node_document = document;
     }
 
     /// Get last child of node's child nodes.
