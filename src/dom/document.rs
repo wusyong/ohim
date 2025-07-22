@@ -15,7 +15,7 @@ use super::{ElementLocal, Node};
 
 /// <https://dom.spec.whatwg.org/#document>
 #[derive(Clone, Debug)]
-pub struct Document(Object<NodeImpl>);
+pub struct Document(pub(crate) Object<NodeImpl>);
 
 impl Document {
     /// Create a `Document` object.
@@ -82,16 +82,17 @@ impl Document {
     /// <https://html.spec.whatwg.org/multipage/#populate-with-html/head/body>
     pub fn populate_hhb(&self, mut store: impl AsContextMut) -> Result<()> {
         // 1. Let html be the result of creating an element given document, "html", and the HTML namespace.
-        let html =
-            Element::new(self, ElementLocal::Html, NameSpace::HTML, None, &mut store)?.to_node();
+        let html: Node =
+            Element::new(self, ElementLocal::Html, NameSpace::HTML, None, &mut store)?.into();
         // 2. Let head be the result of creating an element given document, "head", and the HTML namespace.
         let head =
-            Element::new(self, ElementLocal::Head, NameSpace::HTML, None, &mut store)?.to_node();
+            Element::new(self, ElementLocal::Head, NameSpace::HTML, None, &mut store)?.into();
         // 3. Let body be the result of creating an element given document, "body", and the HTML namespace.
         let body =
-            Element::new(self, ElementLocal::Body, NameSpace::HTML, None, &mut store)?.to_node();
+            Element::new(self, ElementLocal::Body, NameSpace::HTML, None, &mut store)?.into();
         // 4. Append html to document.
-        self.to_node().pre_insert(html.clone(), None, &mut store);
+        let document: Node = self.clone().into();
+        document.pre_insert(html.clone(), None, &mut store);
         // 5. Append head to html.
         html.pre_insert(head, None, &mut store);
         // 6. Append body to html.
@@ -102,11 +103,6 @@ impl Document {
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         self
-    }
-
-    /// Get reference of the `Node`.
-    pub fn to_node(&self) -> Node {
-        Node(self.0.clone())
     }
 }
 

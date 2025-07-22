@@ -119,7 +119,7 @@ impl BrowsingContext {
             creator_url,
             true,
             // TODO: Define CustomElementRegistry
-            store,
+            &mut store,
         )
         .expect("Failed to create document");
         // 16. TODO: If creator is non-null, then:
@@ -127,7 +127,10 @@ impl BrowsingContext {
         // XXX: Unimplemented because this is only used for printing.
 
         // 19. Populate with html/head/body given document.
-        // TODO: 19~21
+        document
+            .populate_hhb(&mut store)
+            .expect("Failed to create Elements");
+        // TODO: 20~21
         // 22. Return browsingContext and document.
         (context, document)
     }

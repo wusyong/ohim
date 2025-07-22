@@ -6,7 +6,7 @@ use crate::{
     DocumentImpl, ElementImpl, EventTarget, Object, WindowStates, ohim::dom::node::HostNode,
 };
 
-use super::Document;
+use super::{Document, Element};
 
 /// <https://dom.spec.whatwg.org/#node>
 #[derive(Clone, Debug)]
@@ -56,15 +56,14 @@ impl Node {
             // 7.1 Adopt node into parent’s node document.
             node.adopt(self.data(&store).node_document.clone(), &mut store);
             match child {
-                // TODO: Connect sibling
                 // 7.2 If child is null, then append node to parent’s children.
-                None => self.data_mut(&mut store).child_nodes.push_back(node),
+                None => self.append_child(node, &mut store),
                 // 7.3 Otherwise, insert node into parent’s children before child’s index.
                 Some(c) => {
                     if let Some(index) = self.data(&store).child_nodes.iter().position(|n| {
                         Rooted::ref_eq(&store, n.as_root(), c.as_root()).unwrap_or_default()
                     }) {
-                        self.data_mut(&mut store).child_nodes.insert(index, node);
+                        self.insert_child(index, node, &mut store);
                     } else {
                         // TODO: log warning!
                     }
@@ -93,6 +92,31 @@ impl Node {
         }
     }
 
+    /// Append a child node to this node.
+    pub fn append_child(&self, node: Node, mut store: impl AsContextMut) {
+        if let Some(child) = self.data(&store).child_nodes.back() {
+            let child = child.clone();
+            child.clone().data_mut(&mut store).next_sibling = Some(node.clone());
+            node.clone().data_mut(&mut store).previous_sibling = Some(child);
+        }
+        self.data_mut(&mut store).child_nodes.push_back(node);
+    }
+
+    /// Insert a child node to this node.
+    pub fn insert_child(&self, index: usize, node: Node, mut store: impl AsContextMut) {
+        if let Some(prev) = self.data(&store).child_nodes.get(index - 1) {
+            let prev = prev.clone();
+            prev.clone().data_mut(&mut store).next_sibling = Some(node.clone());
+            node.clone().data_mut(&mut store).previous_sibling = Some(prev);
+        }
+        if let Some(next) = self.data(&store).child_nodes.get(index) {
+            let next = next.clone();
+            node.clone().data_mut(&mut store).next_sibling = Some(next.clone());
+            next.data_mut(&mut store).previous_sibling = Some(node.clone());
+        }
+        self.data_mut(&mut store).child_nodes.insert(index, node);
+    }
+
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         self
@@ -104,6 +128,18 @@ impl Deref for Node {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl From<Document> for Node {
+    fn from(value: Document) -> Self {
+        Self(value.0)
+    }
+}
+
+impl From<Element> for Node {
+    fn from(value: Element) -> Self {
+        Self(value.0)
     }
 }
 

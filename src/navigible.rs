@@ -7,16 +7,13 @@ use std::{
         Arc, LazyLock, Mutex,
         atomic::{AtomicUsize, Ordering},
     },
-    usize,
 };
 
 use wasmtime::AsContextMut;
 
 use crate::{
     Document, Element,
-    browsing_context::{
-        BrowsingContext, BrowsingContextGroup, BrowsingContextGroupID, BrowsingContextID,
-    },
+    browsing_context::BrowsingContext,
     url::{DOMUrl, ImmutableOrigin},
 };
 
@@ -56,7 +53,6 @@ impl Navigable {
     }
 
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-top-level-traversable>
-    /// TODO: implement BrowsingContext
     pub fn create_top_traversable(
         opener: Option<bool>,
         target: String,

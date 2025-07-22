@@ -7,11 +7,11 @@ use crate::{
     string::DOMString,
 };
 
-use super::{Document, HTMLElementImpl, HTMLElementType, Node};
+use super::{Document, HTMLElementImpl, HTMLElementType};
 
 /// <https://dom.spec.whatwg.org/#element>
 #[derive(Clone, Debug)]
-pub struct Element(Object<NodeImpl>);
+pub struct Element(pub(crate) Object<NodeImpl>);
 
 // TODO: This should be NodeMethods traits. Same for a EventTarget traits
 impl Element {
@@ -49,11 +49,6 @@ impl Element {
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         self
-    }
-
-    /// Get reference of the `Node`.
-    pub fn to_node(&self) -> Node {
-        Node(self.0.clone())
     }
 }
 
