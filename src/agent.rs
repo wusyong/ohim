@@ -78,9 +78,9 @@ impl Deref for AgentID {
 pub struct Realm {
     id: RealmID,
     _agent: AgentID,
-    _global_object: Option<Window>,
+    pub(crate) global_object: Option<Window>,
     _global_this: Option<WindowProxy>,
-    settings_object: Option<Environment>,
+    pub(crate) settings_object: Option<Environment>,
 }
 
 impl Realm {
@@ -98,7 +98,7 @@ impl Realm {
         Self {
             id,
             _agent: agent,
-            _global_object: global_object,
+            global_object,
             _global_this: global_this,
             settings_object: None,
         }
@@ -132,7 +132,7 @@ impl Realm {
             _top_url: Some(top_url),
             _top_origin: Some(top_origin),
             browsing_context,
-            _ready: false,
+            ready: false,
         };
         // 7. Set realm's [[HostDefined]] field to settings object.
         self.settings_object = Some(settings_object);
@@ -142,7 +142,7 @@ impl Realm {
 }
 
 /// <https://html.spec.whatwg.org/multipage/#concept-relevant-realm>
-static RELEVANT_REALM: LazyLock<Arc<Mutex<HashMap<RealmID, Realm>>>> =
+pub static RELEVANT_REALM: LazyLock<Arc<Mutex<HashMap<RealmID, Realm>>>> =
     LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
 
 /// ID of `Realm`.
@@ -174,7 +174,7 @@ pub struct Environment {
     _top_url: Option<DOMUrl>,
     _top_origin: Option<ImmutableOrigin>,
     browsing_context: Option<BrowsingContextID>,
-    _ready: bool,
+    pub(crate) ready: bool,
     // TODO: An active service worker
 }
 

@@ -27,6 +27,7 @@ pub struct BrowsingContext {
     group: Option<BrowsingContextGroupID>,
     /// <https://html.spec.whatwg.org/multipage/#popup-sandboxing-flag-set>
     popup_flag: SandboxingFlag,
+    pub(crate) window: Option<Window>,
 }
 
 /// <https://html.spec.whatwg.org/multipage/#browsing-context-set>
@@ -54,10 +55,11 @@ impl BrowsingContext {
         mut store: impl AsContextMut,
     ) -> (Self, Document) {
         // 1. Let browsingContext be a new browsing context.
-        let context = BrowsingContext {
+        let mut context = BrowsingContext {
             id: BrowsingContextID::default(),
             group: None,
             popup_flag: SandboxingFlag::empty(),
+            window: None,
         };
         // 2. Let unsafeContextCreationTime be the unsafe shared current time.
         let _time = Instant::now();
@@ -86,6 +88,7 @@ impl BrowsingContext {
             Some(Window::new(&mut store).expect("Failed to create window")),
             Some(WindowProxy {}),
         );
+        let realm_id = realm.id();
         // 11. Let topLevelCreationURL be about:blank if embedder is null; TODO: otherwise embedder's relevant settings
         // object's top-level creation URL.
         let top_url = DOMUrl::parse("about:blank").unwrap();
@@ -117,6 +120,7 @@ impl BrowsingContext {
             load_time_info,
             true,
             creator_url,
+            realm_id,
             true,
             // TODO: Define CustomElementRegistry
             &mut store,
@@ -130,7 +134,9 @@ impl BrowsingContext {
         document
             .populate_hhb(&mut store)
             .expect("Failed to create Elements");
-        // TODO: 20~21
+        // 20. Make active document.
+        document.active(&mut context, false, &store);
+        // 21. TODO: Completely finish loading document.
         // 22. Return browsingContext and document.
         (context, document)
     }

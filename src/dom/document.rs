@@ -1,12 +1,15 @@
-use std::ops::Deref;
+use std::{
+    ops::Deref,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use headers::ContentType;
 use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
 use crate::{
     Element, NodeImpl, NodeTypeData, Object, WindowStates,
-    agent::NameSpace,
-    browsing_context::{BrowsingContextID, SandboxingFlag},
+    agent::{NameSpace, RELEVANT_REALM, RealmID},
+    browsing_context::{BrowsingContext, BrowsingContextID, SandboxingFlag},
     ohim::dom::node::HostDocument,
     url::{DOMUrl, ImmutableOrigin},
 };
@@ -31,6 +34,7 @@ impl Document {
         time_info: bool,
         is_blank: bool,
         base_url: Option<DOMUrl>,
+        realm: RealmID,
         allow_shadow: bool,
         mut store: impl AsContextMut,
     ) -> Result<Self> {
@@ -47,6 +51,7 @@ impl Document {
                 time_info,
                 is_blank,
                 base_url,
+                realm,
                 allow_shadow,
             ))),
         )?);
@@ -98,6 +103,28 @@ impl Document {
         // 6. Append body to html.
         html.pre_insert(body, None, &mut store);
         Ok(())
+    }
+
+    /// <https://html.spec.whatwg.org/multipage/#make-active>
+    pub fn active(&self, context: &mut BrowsingContext, visibility: bool, store: impl AsContext) {
+        let id = self.data(&store).as_document().realm;
+        let mut window = None;
+        if let Some(realm) = RELEVANT_REALM.lock().unwrap().get_mut(&id) {
+            // 1. Let window be document's relevant global object.
+            window = realm.global_object.clone();
+            // 5. Set window's relevant settings object's execution ready flag.
+            if let Some(env) = &mut realm.settings_object {
+                env.ready = true;
+            }
+        };
+        // 2. Set document's browsing context's WindowProxy's [[Window]] internal slot value to window.
+        context.window = window;
+        // 3. Set document's visibility state to document's node navigable's traversable navigable's system visibility state.
+        self.data(&store)
+            .as_document()
+            .visibility
+            .store(visibility, Ordering::Relaxed);
+        // TODO: 4.Queue a new VisibilityStateEntry whose visibility state is document's visibility state and whose timestamp is zero.
     }
 
     /// Get `Rooted<ExternRef>` reference of the `Node`.
@@ -161,7 +188,9 @@ pub struct DocumentImpl {
     _custom_element: Option<bool>,
     /// <https://dom.spec.whatwg.org/#concept-document-url>
     url: DOMUrl,
+    realm: RealmID,
     document_element: Option<Element>,
+    visibility: AtomicBool,
 }
 
 impl DocumentImpl {
@@ -178,6 +207,7 @@ impl DocumentImpl {
         time_info: bool,
         is_blank: bool,
         base_url: Option<DOMUrl>,
+        realm: RealmID,
         allow_shadow: bool,
     ) -> Self {
         DocumentImpl {
@@ -194,7 +224,9 @@ impl DocumentImpl {
             _allow_shadow: allow_shadow,
             _custom_element: None,
             url: DOMUrl::parse("about:blank").unwrap(),
+            realm,
             document_element: None,
+            visibility: Default::default(),
         }
     }
 }
