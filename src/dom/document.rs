@@ -1,18 +1,24 @@
-use std::ops::Deref;
+use std::{
+    ops::Deref,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use headers::ContentType;
 use wasmtime::{AsContext, AsContextMut, ExternRef, Result, Rooted, component::Resource};
 
 use crate::{
     Element, NodeImpl, NodeTypeData, Object, WindowStates,
-    browsing_context::{BrowsingContextID, SandboxingFlag},
+    agent::{NameSpace, RELEVANT_REALM, RealmID},
+    browsing_context::{BrowsingContext, BrowsingContextID, SandboxingFlag},
     ohim::dom::node::HostDocument,
     url::{DOMUrl, ImmutableOrigin},
 };
 
+use super::{ElementLocal, Node};
+
 /// <https://dom.spec.whatwg.org/#document>
 #[derive(Clone, Debug)]
-pub struct Document(Object<NodeImpl>);
+pub struct Document(pub(crate) Object<NodeImpl>);
 
 impl Document {
     /// Create a `Document` object.
@@ -28,11 +34,12 @@ impl Document {
         time_info: bool,
         is_blank: bool,
         base_url: Option<DOMUrl>,
+        realm: RealmID,
         allow_shadow: bool,
-        store: impl AsContextMut,
+        mut store: impl AsContextMut,
     ) -> Result<Self> {
-        Ok(Document(Object::new(
-            store,
+        let document = Document(Object::new(
+            &mut store,
             NodeImpl::new_with_type(NodeTypeData::Document(DocumentImpl::new(
                 is_html,
                 content_type,
@@ -44,9 +51,16 @@ impl Document {
                 time_info,
                 is_blank,
                 base_url,
+                realm,
                 allow_shadow,
             ))),
-        )?))
+        )?);
+
+        document
+            .data_mut(&mut store)
+            .set_node_document(Some(document.clone()));
+
+        Ok(document)
     }
 
     /// <https://dom.spec.whatwg.org/#concept-document-origin>
@@ -70,6 +84,49 @@ impl Document {
         self.data(&store).as_document().document_element.clone()
     }
 
+    /// <https://html.spec.whatwg.org/multipage/#populate-with-html/head/body>
+    pub fn populate_hhb(&self, mut store: impl AsContextMut) -> Result<()> {
+        // 1. Let html be the result of creating an element given document, "html", and the HTML namespace.
+        let html: Node =
+            Element::new(self, ElementLocal::Html, NameSpace::HTML, None, &mut store)?.into();
+        // 2. Let head be the result of creating an element given document, "head", and the HTML namespace.
+        let head =
+            Element::new(self, ElementLocal::Head, NameSpace::HTML, None, &mut store)?.into();
+        // 3. Let body be the result of creating an element given document, "body", and the HTML namespace.
+        let body =
+            Element::new(self, ElementLocal::Body, NameSpace::HTML, None, &mut store)?.into();
+        // 4. Append html to document.
+        let document: Node = self.clone().into();
+        document.pre_insert(html.clone(), None, &mut store);
+        // 5. Append head to html.
+        html.pre_insert(head, None, &mut store);
+        // 6. Append body to html.
+        html.pre_insert(body, None, &mut store);
+        Ok(())
+    }
+
+    /// <https://html.spec.whatwg.org/multipage/#make-active>
+    pub fn active(&self, context: &mut BrowsingContext, visibility: bool, store: impl AsContext) {
+        let id = self.data(&store).as_document().realm;
+        let mut window = None;
+        if let Some(realm) = RELEVANT_REALM.lock().unwrap().get_mut(&id) {
+            // 1. Let window be document's relevant global object.
+            window = realm.global_object.clone();
+            // 5. Set window's relevant settings object's execution ready flag.
+            if let Some(env) = &mut realm.settings_object {
+                env.ready = true;
+            }
+        };
+        // 2. Set document's browsing context's WindowProxy's [[Window]] internal slot value to window.
+        context.window = window;
+        // 3. Set document's visibility state to document's node navigable's traversable navigable's system visibility state.
+        self.data(&store)
+            .as_document()
+            .visibility
+            .store(visibility, Ordering::Relaxed);
+        // TODO: 4.Queue a new VisibilityStateEntry whose visibility state is document's visibility state and whose timestamp is zero.
+    }
+
     /// Get `Rooted<ExternRef>` reference of the `Node`.
     pub fn as_root(&self) -> &Rooted<ExternRef> {
         self
@@ -85,13 +142,13 @@ impl NodeImpl {
         doc
     }
 
-    /// Get `DocumentImpl` exclusive reference.
-    fn as_document_mut(&mut self) -> &mut DocumentImpl {
-        let NodeTypeData::Document(ref mut doc) = self.data else {
-            unreachable!()
-        };
-        doc
-    }
+    // /// Get `DocumentImpl` exclusive reference.
+    // fn as_document_mut(&mut self) -> &mut DocumentImpl {
+    //     let NodeTypeData::Document(ref mut doc) = self.data else {
+    //         unreachable!()
+    //     };
+    //     doc
+    // }
 }
 
 impl Deref for Document {
@@ -106,32 +163,34 @@ impl Deref for Document {
 #[derive(Debug)]
 pub struct DocumentImpl {
     /// <https://dom.spec.whatwg.org/#concept-document-type>
-    is_html: bool,
+    _is_html: bool,
     /// <https://dom.spec.whatwg.org/#concept-document-content-type>
-    content_type: ContentType,
+    _content_type: ContentType,
     /// <https://dom.spec.whatwg.org/#concept-document-mode>
-    mode: DocumentMode,
+    _mode: DocumentMode,
     /// <https://dom.spec.whatwg.org/#concept-document-origin>
     origin: ImmutableOrigin,
     /// <https://html.spec.whatwg.org/multipage/#concept-document-bc>
-    browsing_context: Option<BrowsingContextID>,
+    _browsing_context: Option<BrowsingContextID>,
     /// <https://html.spec.whatwg.org/multipage/#concept-document-permissions-policy>
-    policy: bool,
+    _policy: bool,
     /// <https://html.spec.whatwg.org/multipage/browsers.html#active-sandboxing-flag-set>
-    flags: SandboxingFlag,
+    _flags: SandboxingFlag,
     /// <https://html.spec.whatwg.org/multipage/dom.html#load-timing-info>
-    time_info: bool,
+    _time_info: bool,
     /// <https://html.spec.whatwg.org/multipage/dom.html#is-initial-about:blank>
-    is_blank: bool,
+    _is_blank: bool,
     /// <https://html.spec.whatwg.org/multipage/#concept-document-about-base-url>
     about_base_url: Option<DOMUrl>,
     /// <https://dom.spec.whatwg.org/#document-allow-declarative-shadow-roots>
-    allow_shadow: bool,
+    _allow_shadow: bool,
     /// <https://dom.spec.whatwg.org/#document-custom-element-registry>
-    custom_element: Option<bool>,
+    _custom_element: Option<bool>,
     /// <https://dom.spec.whatwg.org/#concept-document-url>
     url: DOMUrl,
+    realm: RealmID,
     document_element: Option<Element>,
+    visibility: AtomicBool,
 }
 
 impl DocumentImpl {
@@ -148,23 +207,26 @@ impl DocumentImpl {
         time_info: bool,
         is_blank: bool,
         base_url: Option<DOMUrl>,
+        realm: RealmID,
         allow_shadow: bool,
     ) -> Self {
         DocumentImpl {
-            is_html,
-            content_type,
-            mode,
+            _is_html: is_html,
+            _content_type: content_type,
+            _mode: mode,
             origin,
-            browsing_context: Some(browsing_context),
-            policy,
-            flags,
-            time_info,
-            is_blank,
+            _browsing_context: Some(browsing_context),
+            _policy: policy,
+            _flags: flags,
+            _time_info: time_info,
+            _is_blank: is_blank,
             about_base_url: base_url,
-            allow_shadow,
-            custom_element: None,
+            _allow_shadow: allow_shadow,
+            _custom_element: None,
             url: DOMUrl::parse("about:blank").unwrap(),
+            realm,
             document_element: None,
+            visibility: Default::default(),
         }
     }
 }

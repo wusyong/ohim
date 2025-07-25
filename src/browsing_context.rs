@@ -8,10 +8,9 @@ use std::{
         atomic::{AtomicUsize, Ordering},
     },
     time::Instant,
-    u16,
 };
 
-use bitflags::{Flags, bitflags};
+use bitflags::bitflags;
 use headers::ContentType;
 use wasmtime::AsContextMut;
 
@@ -28,6 +27,7 @@ pub struct BrowsingContext {
     group: Option<BrowsingContextGroupID>,
     /// <https://html.spec.whatwg.org/multipage/#popup-sandboxing-flag-set>
     popup_flag: SandboxingFlag,
+    pub(crate) window: Option<Window>,
 }
 
 /// <https://html.spec.whatwg.org/multipage/#browsing-context-set>
@@ -49,19 +49,20 @@ impl BrowsingContext {
     /// <https://html.spec.whatwg.org/multipage/document-sequences.html#creating-a-new-browsing-context>
     /// TODO: implement embedder
     pub fn new_browsing_context(
-        creator: Option<Document>,
+        _creator: Option<Document>,
         embedder: Option<bool>,
         group: &mut BrowsingContextGroup,
         mut store: impl AsContextMut,
     ) -> (Self, Document) {
         // 1. Let browsingContext be a new browsing context.
-        let context = BrowsingContext {
+        let mut context = BrowsingContext {
             id: BrowsingContextID::default(),
             group: None,
             popup_flag: SandboxingFlag::empty(),
+            window: None,
         };
         // 2. Let unsafeContextCreationTime be the unsafe shared current time.
-        let time = Instant::now();
+        let _time = Instant::now();
         // 3. Let creatorOrigin be null.
         let creator_origin: Option<ImmutableOrigin> = None;
         // 4. Let creatorBaseURL be null.
@@ -87,6 +88,7 @@ impl BrowsingContext {
             Some(Window::new(&mut store).expect("Failed to create window")),
             Some(WindowProxy {}),
         );
+        let realm_id = realm.id();
         // 11. Let topLevelCreationURL be about:blank if embedder is null; TODO: otherwise embedder's relevant settings
         // object's top-level creation URL.
         let top_url = DOMUrl::parse("about:blank").unwrap();
@@ -118,9 +120,10 @@ impl BrowsingContext {
             load_time_info,
             true,
             creator_url,
+            realm_id,
             true,
             // TODO: Define CustomElementRegistry
-            store,
+            &mut store,
         )
         .expect("Failed to create document");
         // 16. TODO: If creator is non-null, then:
@@ -128,7 +131,12 @@ impl BrowsingContext {
         // XXX: Unimplemented because this is only used for printing.
 
         // 19. Populate with html/head/body given document.
-        // TODO: 19~21
+        document
+            .populate_hhb(&mut store)
+            .expect("Failed to create Elements");
+        // 20. Make active document.
+        document.active(&mut context, false, &store);
+        // 21. TODO: Completely finish loading document.
         // 22. Return browsingContext and document.
         (context, document)
     }
