@@ -3,6 +3,7 @@ package ohim:dom;
 world imports {
     //import event;
     //import event-target;
+
     import node;
     export test: func() -> string;
 
@@ -11,4 +12,12 @@ world imports {
     // import register-callback: func(name: string);
     // import unregister-callback: func(name: string);
     // export call-callback: func(name: string, args: list<string>) -> string;
+}
+
+world imports-go {
+    // required by go
+    include wasi:cli/imports@0.2.6;
+
+    import node;
+    export test: func() -> string;
 }

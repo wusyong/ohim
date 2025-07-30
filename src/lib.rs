@@ -10,6 +10,7 @@
 use std::fmt::Debug;
 
 pub use bindings::{Imports, ohim};
+
 pub use dom::*;
 use ohim::dom::node::Host;
 use wasmtime::{Store, component::ResourceTable};
@@ -27,6 +28,7 @@ mod bindings {
     pub use super::*;
     wasmtime::component::bindgen!({
         path: "wit",
+        world: "ohim:dom/imports",
         with: {
             "ohim:dom/node/node": Node,
             "ohim:dom/node/document": Document,
@@ -48,7 +50,7 @@ impl WindowStates {
     pub fn create() -> Self {
         Self {
             table: ResourceTable::new(),
-            ctx: WasiCtx::builder().build(),
+            ctx: WasiCtx::builder().inherit_stdout().build(),
             store: Store::<()>::default(),
         }
     }
