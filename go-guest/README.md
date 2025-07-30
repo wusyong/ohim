@@ -1,5 +1,4 @@
-# gyu-dom
-DOM made by WebAssembly component and Go lang.
+# Golang guest component
 
 - Documents
   - https://component-model.bytecodealliance.org/language-support/go.html
@@ -21,12 +20,12 @@ wkg wit build -d ../wit -o ../ohim:dom.wasm
 
 ### Generate bindings wasm <-> go from ohim WIT definition
 ```
-go tool wit-bindgen-go generate --world ohim:dom/imports --out internal ../ohim:dom.wasm
+go tool wit-bindgen-go generate --world ohim:dom/imports-go --out internal ../ohim:dom.wasm
 ```
 
 ### Build host component
 ```
-tinygo build -target=wasip2 -o test.wasm --wit-package ../ohim:dom.wasm --wit-world ohim:dom/imports main.go
+tinygo build -target=wasip2 -o test.wasm --wit-package ../ohim:dom.wasm --wit-world ohim:dom/imports-go main.go
 ```
 
 ### Exam wasm component exports
