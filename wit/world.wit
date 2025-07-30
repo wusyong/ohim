@@ -1,14 +1,18 @@
 package ohim:dom;
 
-world imports {
-    //import event;
-    //import event-target;
-
+world imports-go {
     // required by go
     include wasi:cli/imports@0.2.6;
 
     import node;
+    export test: func() -> string;
+}
 
+world imports {
+    //import event;
+    //import event-target;
+
+    import node;
     export test: func() -> string;
 
     // FIXME: Workaround of callback until scoped callback is supported:

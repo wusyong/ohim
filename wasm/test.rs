@@ -2,7 +2,7 @@ use ohim::dom::node::Document;
 
 // cargo component build
 wit_bindgen::generate!({
-    path: "../wit/",
+    path: "../wit",
     world: "ohim:dom/imports",
 });
 

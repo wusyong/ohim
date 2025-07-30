@@ -30,8 +30,10 @@ fn main() -> Result<()> {
     wasmtime_wasi::p2::add_to_linker_sync(&mut linker)?;
     node::add_to_linker::<_, HasSelf<_>>(&mut linker, |state| state)?;
 
-    // Guest component import from go client.
-    let component = convert_to_component("../go-guest/test.wasm")?;
+    // Guest component import from go guest.
+    let component = convert_to_component("go-guest/test.wasm")?;
+    // Guest component import from rust guest.
+    // let component = convert_to_component("target/wasm32-wasip2/debug/test.wasm")?;
     let component = Component::new(&engine, &component)?;
     let instance = Imports::instantiate(&mut store, &component, &linker)?;
 
